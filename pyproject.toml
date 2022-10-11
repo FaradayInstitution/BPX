@@ -1,0 +1,19 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "bpx"
+authors = [{name = "Martin Robinson", email = "martin.robinson@dtc.ox.ac.uk"}]
+readme = "README.md"
+dynamic = ["version", "description"]
+dependencies = [
+    "pydantic",
+    "pyparsing",
+]
+
+[project.optional-dependencies]
+dev = [
+    'coverage',                 # Coverage checking
+    'flake8>=3',                # Style checking
+]

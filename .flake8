@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 79
+filename=
+    *.py,
+    ./test
+exclude=
+    ./dev,
+    ./.git,
+    ./.github,
+    ./myokit.egg-info,
+    ./myokit/_exec_old.py,
+    ./myokit/formats/python/template,
+    ./build,
+    ./venv,
+    ./venv2,
