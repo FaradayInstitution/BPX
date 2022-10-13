@@ -23,7 +23,8 @@ class Header(BaseModel):
         None,
         alias='Description',
         description=(
-            'May contain additional description such as references, authors, etc.'
+            'May contain additional description such as '
+            'references, authors, etc.'
         ),
         example='Chang-Hui Chen et al 2020 J. Electrochem. Soc. 167 080534',
     )
@@ -36,7 +37,8 @@ class Header(BaseModel):
         alias='Model',
         example='Newman',
         description=(
-            'Model type (e.g. "Newman", "Newman with degradation", "3D Pouch", "SPMe", etc.)'
+            'Model type (e.g. "Newman", "Newman with degradation", '
+            '"3D Pouch", "SPMe", etc.)'
         )
     )
 
@@ -134,7 +136,9 @@ class Electrolyte(BaseModel):
     initial_concentration: float = Field(
         alias='Initial concentration [mol.m-3]',
         example=1000,
-        description='Initial / rest lithium ion concentration in the electrolyte',
+        description=(
+            'Initial / rest lithium ion concentration in the electrolyte'
+        ),
     )
     cation_transference_number: float = Field(
         alias='Cation transference number',
@@ -192,7 +196,9 @@ class Anode(BaseModel):
     ocp: FloatFunctionTable = Field(
         alias='OCP [V]',
         example={"x": [0, 0.1, 1], "y": [1.72, 0.06]},
-        description='Open-circuit potential (OCP), function of particle stoichiometry',
+        description=(
+            'Open-circuit potential (OCP), function of particle stoichiometry'
+        ),
     )
     conductivity: FloatFunctionTable = Field(
         alias='Conductivity [S.m-1]',
@@ -322,10 +328,48 @@ class Cathode(BaseModel):
         description='Activation energy of reaction rate in particles',
     )
 
+
 class Separator(BaseModel):
-"Thickness [m]":	1.2e-5	float	yes	Separator thickness
-"Porosity":	0.47	float	yes	Electrolyte volume fraction (porosity)
-"Transport efficiency":	0.3222	float	yes	Transport efficiency / inverse MacMullin number
+    thickness: float = Field(
+        alias='Thickness [m]',
+        example=1.2e-5,
+        description='Separator thickness',
+    )
+    porosity: float = Field(
+        alias='Porosity',
+        example=0.47,
+        description='Electrolyte volume fraction (porosity)',
+    )
+    transport_efficiency: float = Field(
+        alias='Transport efficiency',
+        example=0.3222,
+        description='Transport efficiency / inverse MacMullin number',
+    )
+
+
+class Experimental(BaseModel):
+    time: List[float] = Field(
+        None,
+        alias='Time [s]',
+        example=[0, 0.1, 0.2, 0.3, 0.4],
+        description='Time in seconds (list of floats)'
+    )
+    current: List[float] = Field(
+        None,
+        alias='Current [A]',
+        example=[-5, -5, -5, -5, -5],
+        description='Current vs time',
+    )
+    voltage: List[float] = Field(
+        alias='Voltage [V]',
+        example=[4.2, 4.1, 4.0, 3.9, 3.8],
+        description='Voltage vs time',
+    )
+    temperature: List[float] = Field(
+        alias='Temperature [K]',
+        example=[298, 298, 298, 298, 298],
+        description='Temperature vs time',
+    )
 
 
 class Parameterisation(BaseModel):
@@ -335,6 +379,22 @@ class Parameterisation(BaseModel):
     electrolyte: Electrolyte = Field(
         alias='Electrolyte',
     )
+    anode: Anode = Field(
+        alias='Anode',
+    )
+    cathode: Anode = Field(
+        alias='Cathode',
+    )
+    separator: Separator = Field(
+        alias='Separator',
+    )
+
+
+class Validation(BaseModel):
+    experimental: Experimental = Field(
+        None,
+        alias='Experimental'
+    )
 
 
 class BPX(BaseModel):
@@ -343,4 +403,8 @@ class BPX(BaseModel):
     )
     parameterisation: Parameterisation = Field(
         alias='Parameterisation'
+    )
+    validation: Validation = Field(
+        None,
+        alias='Validation'
     )
