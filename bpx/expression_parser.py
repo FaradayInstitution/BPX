@@ -45,7 +45,7 @@ class ExpressionParser:
         )
 
         self.expr_stack = []
-        self.bnf = expr
+        self.parser = expr
 
     def push_first(self, toks):
         self.expr_stack.append(toks[0])

@@ -10,8 +10,6 @@ class TestSchema(unittest.TestCase):
         self.base = {
             "Header": {
                 "BPX": 1.0,
-                "Title": 'test',
-                "Description": 'testing',
                 "Model": "Newman",
             },
             "Parameterisation": {
@@ -19,9 +17,15 @@ class TestSchema(unittest.TestCase):
                     "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
+                    "Number of electrodes connected in parallel to make a cell": 1,
                 },
                 "Electrolyte": {
+                    "Initial concentration [mol.m-3]": 1000,
+                    "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
+                    "Diffusivity [m2.s-1]": (
+                        "8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"
+                    ),
                 },
             },
         }
@@ -66,7 +70,8 @@ class TestSchema(unittest.TestCase):
         test["Parameterisation"]["Electrolyte"][
             "Conductivity [S.m-1]"
         ] = "this is not a function"
-        parse_obj_as(BPX, test)
+        with self.assertRaises(ValidationError):
+            parse_obj_as(BPX, test)
 
 
 

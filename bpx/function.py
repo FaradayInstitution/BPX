@@ -1,4 +1,4 @@
-from bpx import FunctionParser
+from bpx import ExpressionParser
 
 
 class Function(str):
@@ -9,7 +9,7 @@ class Function(str):
         - math functions: exp, tanh,
         - single variable 'x'
     """
-    parser = FunctionParser()
+    parser = ExpressionParser()
 
     @classmethod
     def __get_validators__(cls):
@@ -31,7 +31,7 @@ class Function(str):
             raise TypeError('string required')
         try:
             cls.parser.parse_string(v)
-        except FunctionParser.ParseException as e:
+        except ExpressionParser.ParseException as e:
             raise ValueError(str(e))
         return cls(v)
 
