@@ -160,13 +160,13 @@ class Electrolyte(BaseModel):
             'of concentration)'
         ),
     )
-    conductivity_activation_energy = Field(
+    conductivity_activation_energy: float = Field(
         None,
         alias='Conductivity activation energy [J.mol-1]',
         example=17100,
         description='Activation energy for conductivity in electrolyte',
     )
-    diffusivity_activation_energy = Field(
+    diffusivity_activation_energy: float = Field(
         None,
         alias='Diffusivity activation energy [J.mol-1]',
         example=17100,
@@ -195,7 +195,7 @@ class Anode(BaseModel):
     )
     ocp: FloatFunctionTable = Field(
         alias='OCP [V]',
-        example={"x": [0, 0.1, 1], "y": [1.72, 0.06]},
+        example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
         description=(
             'Open-circuit potential (OCP), function of particle stoichiometry'
         ),
@@ -272,7 +272,7 @@ class Cathode(BaseModel):
     )
     ocp: FloatFunctionTable = Field(
         alias='OCP [V]',
-        example={"x": [0, 0.1, 1], "y": [1.72, 0.06]},
+        example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
         description=(
             'Open-circuit potential (OCP), '
             'function of particle stoichiometry'

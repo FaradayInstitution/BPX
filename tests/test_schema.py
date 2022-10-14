@@ -27,6 +27,37 @@ class TestSchema(unittest.TestCase):
                         "8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"
                     ),
                 },
+                "Anode": {
+                    "Particle radius [m]": 5.86e-6,
+                    "Thickness [m]": 85.2e-6,
+                    "Diffusivity [m2.s-1]": 3.3e-14,
+                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                    "Conductivity [S.m-1]": 215.0,
+                    "Surface area per unit volume": 383959,
+                    "Porosity": 0.25,
+                    "Transport efficiency": 0.125,
+                    "Reaction rate [mol.m-2.s-1]": 1e-10,
+                    "Initial concentration [mol.m-3]": 29866.1,
+                    "Maximum concentration [mol.m-3]": 33133,
+                },
+                "Cathode": {
+                    "Particle radius [m]": 5.22e-6,
+                    "Thickness [m]": 75.6e-6,
+                    "Diffusivity [m2.s-1]": 4.0e-15,
+                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                    "Conductivity [S.m-1]": 0.18,
+                    "Surface area per unit volume": 382184,
+                    "Porosity": 0.335,
+                    "Transport efficiency": 0.1939,
+                    "Reaction rate [mol.m-2.s-1]": 1e-10,
+                    "Initial concentration [mol.m-3]": 167920,
+                    "Maximum concentration [mol.m-3]": 631040,
+                },
+                "Separator": {
+                    "Thickness [m]": 1.2e-5,
+                    "Porosity": 0.47,
+                    "Transport efficiency": 0.3222,
+                },
             },
         }
 
