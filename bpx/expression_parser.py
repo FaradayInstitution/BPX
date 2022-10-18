@@ -7,6 +7,7 @@
 import pyparsing as pp
 import pyparsing.common as ppc
 
+
 class ExpressionParser:
     ParseException = pp.ParseException
 
@@ -60,4 +61,3 @@ class ExpressionParser:
     def parse_string(self, model_str, parse_all=True):
         self.expr_stack = []
         self.parser.parseString(model_str, parseAll=parse_all)
-

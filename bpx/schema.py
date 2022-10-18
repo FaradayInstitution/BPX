@@ -1,6 +1,6 @@
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from bpx import Function, InterpolatedTable
 

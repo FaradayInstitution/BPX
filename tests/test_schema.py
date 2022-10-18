@@ -104,11 +104,15 @@ class TestSchema(unittest.TestCase):
         with self.assertRaises(ValidationError):
             parse_obj_as(BPX, test)
 
-
-
-
-
-
+    def test_to_python_function(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["Electrolyte"][
+            "Conductivity [S.m-1]"
+        ] = "2.0 * x"
+        obj = parse_obj_as(BPX, test)
+        funct = obj.parameterisation.electrolyte.conductivity
+        pyfunct = funct.to_python_function()
+        self.assertEqual(pyfunct(2.0), 4.0)
 
 
 if __name__ == '__main__':
