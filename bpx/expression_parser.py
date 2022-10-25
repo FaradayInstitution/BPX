@@ -14,19 +14,34 @@ class ExpressionParser:
     def __init__(self):
         fnumber = ppc.number()
         ident = pp.Literal("x")
+        fn_ident = pp.Literal("x")
+
+        fn_ident = pp.Word(pp.alphas, pp.alphanums)
         plus, minus, mult, div = map(pp.Literal, "+-*/")
         lpar, rpar = map(pp.Suppress, "()")
         addop = plus | minus
         multop = mult | div
-        expop = pp.Literal("^")
+        expop = pp.Literal("**")
 
         expr = pp.Forward()
+
+        expr_list = pp.delimitedList(pp.Group(expr))
+        def insert_fn_argcount_tuple(t):
+            fn = t.pop(0)
+            num_args = len(t[0])
+            t.insert(0, (fn, num_args))
+
+        fn_call = (fn_ident + lpar - pp.Group(expr_list) + rpar).setParseAction(
+            insert_fn_argcount_tuple
+        )
+
         atom = (
             addop[...] + (
-                (fnumber | ident).set_parse_action(self.push_first)
+                (fn_call | fnumber | ident).set_parse_action(self.push_first)
                 | pp.Group(lpar + expr + rpar)
             )
         ).set_parse_action(self.push_unary_minus)
+
 
         # by defining exponentiation as "atom [ ^ factor ]..." instead of "atom
         # [ ^ atom ]...", we get right-to-left exponents, instead of

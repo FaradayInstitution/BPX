@@ -97,6 +97,13 @@ class TestSchema(unittest.TestCase):
         ] = "1.0 * x + 3"
         parse_obj_as(BPX, test)
 
+    def test_function_with_exp(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["Electrolyte"][
+            "Conductivity [S.m-1]"
+        ] = "1.0 * exp(x) + 3"
+        parse_obj_as(BPX, test)
+
     def test_bad_function(self):
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"][

@@ -199,11 +199,11 @@ class Anode(BaseModel):
             'Open-circuit potential (OCP), function of particle stoichiometry'
         ),
     )
-    conductivity: FloatFunctionTable = Field(
+    conductivity: float = Field(
         alias='Conductivity [S.m-1]',
         example=215.0,
         description=(
-            'Electrolyte conductivity (constant or function of concentration)'
+            'Electrolyte conductivity (constant)'
         ),
     )
     surface_area_per_unit_volume: float = Field(
@@ -277,11 +277,11 @@ class Cathode(BaseModel):
             'function of particle stoichiometry'
         )
     )
-    conductivity: FloatFunctionTable = Field(
+    conductivity: float = Field(
         alias='Conductivity [S.m-1]',
         example=0.18,
         description=(
-            'Electrolyte conductivity (constant or function of concentration)'
+            'Electrolyte conductivity (constant)'
         ),
     )
     surface_area_per_unit_volume: float = Field(
