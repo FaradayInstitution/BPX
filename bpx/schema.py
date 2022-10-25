@@ -73,7 +73,6 @@ class Cell(BaseModel):
         example=4.4
     )
     nominal_cell_capacity: float = Field(
-        None,
         alias='Nominal cell capacity [A.h]',
         description=(
             'Nominal cell capacity. '
@@ -349,13 +348,11 @@ class Separator(BaseModel):
 
 class Experimental(BaseModel):
     time: List[float] = Field(
-        None,
         alias='Time [s]',
         example=[0, 0.1, 0.2, 0.3, 0.4],
         description='Time in seconds (list of floats)'
     )
     current: List[float] = Field(
-        None,
         alias='Current [A]',
         example=[-5, -5, -5, -5, -5],
         description='Current vs time',
@@ -366,6 +363,7 @@ class Experimental(BaseModel):
         description='Voltage vs time',
     )
     temperature: List[float] = Field(
+        None,
         alias='Temperature [K]',
         example=[298, 298, 298, 298, 298],
         description='Temperature vs time',

@@ -17,6 +17,7 @@ class TestSchema(unittest.TestCase):
                     "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
+                    "Nominal cell capacity [A.h]": 5.0,
                     "Number of electrodes connected in parallel to make a cell": 1,
                 },
                 "Electrolyte": {

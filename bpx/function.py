@@ -57,7 +57,6 @@ class Function(str):
         function_def = f'def {function_name}({arg_str}):\n'
         function_body = f'  return {self}'
         source_code = preamble + function_def + function_body
-        print(source_code)
 
         with tempfile.NamedTemporaryFile(
             suffix='{}.py'.format(function_name), delete=False
