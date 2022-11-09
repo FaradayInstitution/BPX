@@ -380,7 +380,7 @@ class Parameterisation(BaseModel):
     anode: Anode = Field(
         alias='Anode',
     )
-    cathode: Anode = Field(
+    cathode: Cathode = Field(
         alias='Cathode',
     )
     separator: Separator = Field(
