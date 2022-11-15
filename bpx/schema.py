@@ -86,7 +86,7 @@ class Cell(BaseModel):
         example=1000.0,
         description='Specific heat capacity (lumped)',
     )
-    themal_conductivity: float = Field(
+    thermal_conductivity: float = Field(
         None,
         alias='Thermal conductivity [W.m-1.K-1]',
         example=1.0,
@@ -173,16 +173,29 @@ class Electrolyte(BaseModel):
     )
 
 
-class Anode(BaseModel):
+class Contact(BaseModel):
+    thickness: float = Field(
+        alias='Thickness [m]',
+        example=85.2e-6,
+        description='Contact thickness',
+    )
+    porosity: float = Field(
+        alias='Porosity',
+        example=0.47,
+        description='Electrolyte volume fraction (porosity)',
+    )
+    transport_efficiency: float = Field(
+        alias='Transport efficiency',
+        example=0.3222,
+        description='Transport efficiency / inverse MacMullin number',
+    )
+
+
+class Electrode(BaseModel):
     particle_radius: float = Field(
         alias='Particle radius [m]',
         example=5.86e-6,
         description='Particle radius',
-    )
-    thickness: float = Field(
-        alias='Thickness [m]',
-        example=85.2e-6,
-        description='Electrode thickness',
     )
     diffusivity: FloatFunctionTable = Field(
         alias='Diffusivity [m2.s-1]',
@@ -211,16 +224,6 @@ class Anode(BaseModel):
         example=383959,
         description='Particle surface area per unit of volume',
     )
-    porosity: float = Field(
-        alias='Porosity',
-        example=0.25,
-        description='Electrolyte volume fraction (porosity)',
-    )
-    transport_efficiency: float = Field(
-        alias='Transport efficiency',
-        example=0.125,
-        description='Transport efficiency / inverse MacMullin number',
-    )
     reaction_rate: float = Field(
         alias='Reaction rate [mol.m-2.s-1]',
         example=1e-10,
@@ -247,102 +250,6 @@ class Anode(BaseModel):
         alias='Reaction rate activation energy [J.mol-1]',
         example=53400,
         description='Activation energy of reaction rate in particles',
-    )
-
-
-class Cathode(BaseModel):
-    particle_radius: float = Field(
-        alias='Particle radius [m]',
-        example=5.22e-6,
-        description='Particle radius',
-    )
-    thickness: float = Field(
-        alias='Thickness [m]',
-        example=75.6e-6,
-        description='Electrode thickness',
-    )
-    diffusivity: FloatFunctionTable = Field(
-        alias='Diffusivity [m2.s-1]',
-        example='4.0e-15',
-        description=(
-            'Lithium ion diffusivity in particle (constant or function '
-            'of concentration)'
-        ),
-    )
-    ocp: FloatFunctionTable = Field(
-        alias='OCP [V]',
-        example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
-        description=(
-            'Open-circuit potential (OCP), '
-            'function of particle stoichiometry'
-        )
-    )
-    conductivity: float = Field(
-        alias='Conductivity [S.m-1]',
-        example=0.18,
-        description=(
-            'Electrolyte conductivity (constant)'
-        ),
-    )
-    surface_area_per_unit_volume: float = Field(
-        alias='Surface area per unit volume',
-        example=382184,
-        description='Particle surface area per unit of volume',
-    )
-    porosity: float = Field(
-        alias='Porosity',
-        example=0.335,
-        description='Electrolyte volume fraction (porosity)',
-    )
-    transport_efficiency: float = Field(
-        alias='Transport efficiency',
-        example=0.1939,
-        description='Transport efficiency / inverse MacMullin number',
-    )
-    reaction_rate: float = Field(
-        alias='Reaction rate [mol.m-2.s-1]',
-        example=1e-10,
-        description='Normalised reaction rate K (see notes)',
-    )
-    initial_concentration: float = Field(
-        alias='Initial concentration [mol.m-3]',
-        example=167920,
-        description='Initial concentration of lithium ions in particles',
-    )
-    maximum_concentration: float = Field(
-        alias='Maximum concentration [mol.m-3]',
-        example=631040,
-        description='Maximum concentration of lithium ions in particles',
-    )
-    diffusivity_activation_energy: float = Field(
-        None,
-        alias='Diffusivity activation energy [J.mol-1]',
-        example=17800,
-        description='Activation energy for diffusivity in particles',
-    )
-    reaction_rate_activation_energy: float = Field(
-        None,
-        alias='Reaction rate activation energy [J.mol-1]',
-        example=27010,
-        description='Activation energy of reaction rate in particles',
-    )
-
-
-class Separator(BaseModel):
-    thickness: float = Field(
-        alias='Thickness [m]',
-        example=1.2e-5,
-        description='Separator thickness',
-    )
-    porosity: float = Field(
-        alias='Porosity',
-        example=0.47,
-        description='Electrolyte volume fraction (porosity)',
-    )
-    transport_efficiency: float = Field(
-        alias='Transport efficiency',
-        example=0.3222,
-        description='Transport efficiency / inverse MacMullin number',
     )
 
 
@@ -377,13 +284,13 @@ class Parameterisation(BaseModel):
     electrolyte: Electrolyte = Field(
         alias='Electrolyte',
     )
-    anode: Anode = Field(
+    anode: Electrode = Field(
         alias='Anode',
     )
-    cathode: Cathode = Field(
+    cathode: Electrode = Field(
         alias='Cathode',
     )
-    separator: Separator = Field(
+    separator: Contact = Field(
         alias='Separator',
     )
 
