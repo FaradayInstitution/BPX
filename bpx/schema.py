@@ -218,9 +218,9 @@ class NegativeElectrode(BaseModel):
     )
     reaction_rate_constant_activation_energy: float = Field(
         None,
-        alias="Reaction rate activation energy [J.mol-1]",
+        alias="Reaction rate constant activation energy [J.mol-1]",
         example=53400,
-        description="Activation energy of reaction rate in particles",
+        description="Activation energy of reaction rate constant in particles",
     )
 
 
@@ -293,9 +293,9 @@ class PositiveElectrode(BaseModel):
     )
     reaction_rate_constant_activation_energy: float = Field(
         None,
-        alias="Reaction rate activation energy [J.mol-1]",
+        alias="Reaction rate constant activation energy [J.mol-1]",
         example=27010,
-        description="Activation energy of reaction rate in particles",
+        description="Activation energy of reaction rate constant in particles",
     )
 
 
