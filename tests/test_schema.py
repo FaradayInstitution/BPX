@@ -10,15 +10,17 @@ class TestSchema(unittest.TestCase):
         self.base = {
             "Header": {
                 "BPX": 1.0,
-                "Model": "Newman",
+                "Model": "DFN",
             },
             "Parameterisation": {
                 "Cell": {
                     "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
-                    "Nominal cell capacity [A.h]": 5.0,
+                    "Cell external surface area [m2]": 2.2,
+                    "Cell volume [m3]": 1.0,
                     "Number of electrodes connected in parallel to make a cell": 1,
+                    "Nominal cell capacity [A.h]": 5.0,
                 },
                 "Electrolyte": {
                     "Initial concentration [mol.m-3]": 1000,
@@ -28,29 +30,29 @@ class TestSchema(unittest.TestCase):
                         "8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"
                     ),
                 },
-                "Anode": {
+                "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
                     "Thickness [m]": 85.2e-6,
                     "Diffusivity [m2.s-1]": 3.3e-14,
                     "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
                     "Conductivity [S.m-1]": 215.0,
-                    "Surface area per unit volume": 383959,
+                    "Surface area per unit volume [m-1]": 383959,
                     "Porosity": 0.25,
                     "Transport efficiency": 0.125,
-                    "Reaction rate [mol.m-2.s-1]": 1e-10,
+                    "Reaction rate constant [mol.m-2.s-1]": 1e-10,
                     "Initial concentration [mol.m-3]": 29866.1,
                     "Maximum concentration [mol.m-3]": 33133,
                 },
-                "Cathode": {
+                "Positive electrode": {
                     "Particle radius [m]": 5.22e-6,
                     "Thickness [m]": 75.6e-6,
                     "Diffusivity [m2.s-1]": 4.0e-15,
                     "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
                     "Conductivity [S.m-1]": 0.18,
-                    "Surface area per unit volume": 382184,
+                    "Surface area per unit volume [m-1]": 382184,
                     "Porosity": 0.335,
                     "Transport efficiency": 0.1939,
-                    "Reaction rate [mol.m-2.s-1]": 1e-10,
+                    "Reaction rate constant [mol.m-2.s-1]": 1e-10,
                     "Initial concentration [mol.m-3]": 167920,
                     "Maximum concentration [mol.m-3]": 631040,
                 },
@@ -68,9 +70,7 @@ class TestSchema(unittest.TestCase):
 
     def test_table(self):
         test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = {
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
             "x": [1.0, 2.0],
             "y": [2.3, 4.5],
         }
@@ -78,23 +78,19 @@ class TestSchema(unittest.TestCase):
 
     def test_bad_table(self):
         test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = {
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
             "x": [1.0, 2.0],
             "y": [2.3],
         }
         with self.assertRaisesRegex(
-                ValidationError,
-                "x & y should be same length",
+            ValidationError,
+            "x & y should be same length",
         ):
             parse_obj_as(BPX, test)
 
     def test_function(self):
         test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "1.0 * x + 3"
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * x + 3"
         parse_obj_as(BPX, test)
 
     def test_function_with_exp(self):
@@ -114,14 +110,12 @@ class TestSchema(unittest.TestCase):
 
     def test_to_python_function(self):
         test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "2.0 * x"
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "2.0 * x"
         obj = parse_obj_as(BPX, test)
         funct = obj.parameterisation.electrolyte.conductivity
         pyfunct = funct.to_python_function()
         self.assertEqual(pyfunct(2.0), 4.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
