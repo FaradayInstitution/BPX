@@ -191,7 +191,7 @@ class Contact(BaseModel):
     )
 
 
-class Electrode(BaseModel):
+class Electrode(Contact):
     particle_radius: float = Field(
         alias='Particle radius [m]',
         example=5.86e-6,
