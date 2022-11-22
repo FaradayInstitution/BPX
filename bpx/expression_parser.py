@@ -1,4 +1,3 @@
-
 # based on fourFn.py example from pyparsing
 # (https://github.com/pyparsing/pyparsing/blob/master/examples/fourFn.py)
 # Copyright 2003-2019 by Paul McGuire
@@ -26,6 +25,7 @@ class ExpressionParser:
         expr = pp.Forward()
 
         expr_list = pp.delimitedList(pp.Group(expr))
+
         def insert_fn_argcount_tuple(t):
             fn = t.pop(0)
             num_args = len(t[0])
@@ -36,29 +36,20 @@ class ExpressionParser:
         )
 
         atom = (
-            addop[...] + (
+            addop[...]
+            + (
                 (fn_call | fnumber | ident).set_parse_action(self.push_first)
                 | pp.Group(lpar + expr + rpar)
             )
         ).set_parse_action(self.push_unary_minus)
 
-
         # by defining exponentiation as "atom [ ^ factor ]..." instead of "atom
         # [ ^ atom ]...", we get right-to-left exponents, instead of
         # left-to-right that is, 2^3^2 = 2^(3^2), not (2^3)^2.
         factor = pp.Forward()
-        factor <<= (
-            atom
-            + (expop + factor).set_parse_action(self.push_first)[...]
-        )
-        term = (
-            factor
-            + (multop + factor).set_parse_action(self.push_first)[...]
-        )
-        expr <<= (
-            term
-            + (addop + term).set_parse_action(self.push_first)[...]
-        )
+        factor <<= atom + (expop + factor).set_parse_action(self.push_first)[...]
+        term = factor + (multop + factor).set_parse_action(self.push_first)[...]
+        expr <<= term + (addop + term).set_parse_action(self.push_first)[...]
 
         self.expr_stack = []
         self.parser = expr
