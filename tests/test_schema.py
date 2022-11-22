@@ -14,6 +14,7 @@ class TestSchema(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
+                    "Ambient temperature [K]": 299.0,
                     "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
@@ -21,6 +22,8 @@ class TestSchema(unittest.TestCase):
                     "Cell volume [m3]": 1.0,
                     "Number of electrode pairs connected in parallel to make a cell": 1,
                     "Nominal cell capacity [A.h]": 5.0,
+                    "Lower voltage cut-off [V]": 2.0,
+                    "Upper voltage cut-off [V]": 4.0,
                 },
                 "Electrolyte": {
                     "Initial concentration [mol.m-3]": 1000,

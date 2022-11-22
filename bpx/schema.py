@@ -62,13 +62,11 @@ class Cell(BaseModel):
         description=("Number of electrode pairs connected in parallel to make a cell"),
     )
     lower_voltage_cutoff: float = Field(
-        None,
         alias="Lower voltage cut-off [V]",
         description="Minimum allowed voltage",
         example=2.0,
     )
     upper_voltage_cutoff: float = Field(
-        None,
         alias="Upper voltage cut-off [V]",
         description="Maximum allowed voltage",
         example=4.4,
@@ -80,11 +78,17 @@ class Cell(BaseModel):
         ),
         example=5.0,
     )
+    ambient_temperature: float = Field(
+        alias="Ambient temperature [K]",
+        example=298.15,
+    )
     initial_temperature: float = Field(
+        None,
         alias="Initial temperature [K]",
         example=298.15,
     )
     reference_temperature: float = Field(
+        None,
         alias="Reference temperature [K]",
         description=("Reference temperature for the Arrhenius temperature dependence"),
         example=298.15,
@@ -149,16 +153,29 @@ class Electrolyte(BaseModel):
     )
 
 
-class NegativeElectrode(BaseModel):
+class Contact(BaseModel):
+    thickness: float = Field(
+        alias="Thickness [m]",
+        example=85.2e-6,
+        description="Contact thickness",
+    )
+    porosity: float = Field(
+        alias="Porosity",
+        example=0.47,
+        description="Electrolyte volume fraction (porosity)",
+    )
+    transport_efficiency: float = Field(
+        alias="Transport efficiency",
+        example=0.3222,
+        description="Transport efficiency / inverse MacMullin number",
+    )
+
+
+class Electrode(Contact):
     particle_radius: float = Field(
         alias="Particle radius [m]",
         example=5.86e-6,
         description="Particle radius",
-    )
-    thickness: float = Field(
-        alias="Thickness [m]",
-        example=85.2e-6,
-        description="Electrode thickness",
     )
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
@@ -172,83 +189,15 @@ class NegativeElectrode(BaseModel):
         alias="OCP [V]",
         example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
         description=(
-            "Open-circuit potential (OCP), function of particle stoichiometry"
+            "Open-circuit potential (OCP) at the reference temperature, "
+            "function of particle stoichiometry"
         ),
     )
-    conductivity: float = Field(
-        alias="Conductivity [S.m-1]",
-        example=215.0,
-        description=("Electrolyte conductivity (constant)"),
-    )
-    surface_area_per_unit_volume: float = Field(
-        alias="Surface area per unit volume [m-1]",
-        example=383959,
-        description="Particle surface area per unit of volume",
-    )
-    porosity: float = Field(
-        alias="Porosity",
-        example=0.25,
-        description="Electrolyte volume fraction (porosity)",
-    )
-    transport_efficiency: float = Field(
-        alias="Transport efficiency",
-        example=0.125,
-        description="Transport efficiency / inverse MacMullin number",
-    )
-    reaction_rate_constant: float = Field(
-        alias="Reaction rate constant [mol.m-2.s-1]",
-        example=1e-10,
-        description="Normalised reaction rate K (see notes)",
-    )
-    initial_concentration: float = Field(
-        alias="Initial concentration [mol.m-3]",
-        example=29866.1,
-        description="Initial concentration of lithium ions in particles",
-    )
-    maximum_concentration: float = Field(
-        alias="Maximum concentration [mol.m-3]",
-        example=33133,
-        description="Maximum concentration of lithium ions in particles",
-    )
-    diffusivity_activation_energy: float = Field(
+    dudt: FloatFunctionTable = Field(
         None,
-        alias="Diffusivity activation energy [J.mol-1]",
-        example=35000,
-        description="Activation energy for diffusivity in particles",
-    )
-    reaction_rate_constant_activation_energy: float = Field(
-        None,
-        alias="Reaction rate constant activation energy [J.mol-1]",
-        example=53400,
-        description="Activation energy of reaction rate constant in particles",
-    )
-
-
-class PositiveElectrode(BaseModel):
-    particle_radius: float = Field(
-        alias="Particle radius [m]",
-        example=5.22e-6,
-        description="Particle radius",
-    )
-    thickness: float = Field(
-        alias="Thickness [m]",
-        example=75.6e-6,
-        description="Electrode thickness",
-    )
-    diffusivity: FloatFunctionTable = Field(
-        alias="Diffusivity [m2.s-1]",
-        example="4.0e-15",
-        description=(
-            "Lithium ion diffusivity in particle (constant or function "
-            "of concentration)"
-        ),
-    )
-    ocp: FloatFunctionTable = Field(
-        alias="OCP [V]",
-        example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
-        description=(
-            "Open-circuit potential (OCP), " "function of particle stoichiometry"
-        ),
+        alias="Entropic change coefficient [V.K-1]",
+        example={"x": [0, 0.1, 1], "y": [-9e-18, -9e-15, -1e-5]},
+        description=("Entropic change coefficient, function of particle stoichiometry"),
     )
     conductivity: float = Field(
         alias="Conductivity [S.m-1]",
@@ -299,24 +248,6 @@ class PositiveElectrode(BaseModel):
     )
 
 
-class Separator(BaseModel):
-    thickness: float = Field(
-        alias="Thickness [m]",
-        example=1.2e-5,
-        description="Separator thickness",
-    )
-    porosity: float = Field(
-        alias="Porosity",
-        example=0.47,
-        description="Electrolyte volume fraction (porosity)",
-    )
-    transport_efficiency: float = Field(
-        alias="Transport efficiency",
-        example=0.3222,
-        description="Transport efficiency / inverse MacMullin number",
-    )
-
-
 class Experimental(BaseModel):
     time: List[float] = Field(
         alias="Time [s]",
@@ -348,13 +279,13 @@ class Parameterisation(BaseModel):
     electrolyte: Electrolyte = Field(
         alias="Electrolyte",
     )
-    negative_electrode: NegativeElectrode = Field(
+    negative_electrode: Electrode = Field(
         alias="Negative electrode",
     )
-    positive_electrode: PositiveElectrode = Field(
+    positive_electrode: Electrode = Field(
         alias="Positive electrode",
     )
-    separator: Separator = Field(
+    separator: Contact = Field(
         alias="Separator",
     )
 
