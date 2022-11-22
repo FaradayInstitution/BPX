@@ -19,7 +19,7 @@ class TestSchema(unittest.TestCase):
                     "Electrode area [m2]": 2.0,
                     "Cell external surface area [m2]": 2.2,
                     "Cell volume [m3]": 1.0,
-                    "Number of electrodes connected in parallel to make a cell": 1,
+                    "Number of electrode pairs connected in parallel to make a cell": 1,
                     "Nominal cell capacity [A.h]": 5.0,
                 },
                 "Electrolyte": {

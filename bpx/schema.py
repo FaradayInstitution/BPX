@@ -57,9 +57,9 @@ class Cell(BaseModel):
         description="Cell volume",
     )
     number_of_electrodes: int = Field(
-        alias="Number of electrodes connected in parallel to make a cell",
+        alias="Number of electrode pairs connected in parallel to make a cell",
         example=1,
-        description=("Number of electrodes connected in parallel to make a cell"),
+        description=("Number of electrode pairs connected in parallel to make a cell"),
     )
     lower_voltage_cutoff: float = Field(
         None,
