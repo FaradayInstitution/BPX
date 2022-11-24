@@ -1,11 +1,11 @@
 import unittest
 import copy
-from pydantic import parse_obj_as, ValidationError
+from pydantic import parse_obj_as
 
-from bpx import BPX
+from bpx import BPX, get_electrode_stoichiometries, get_electrode_concentrations
 
 
-class TestSchema(unittest.TestCase):
+class TestUtlilities(unittest.TestCase):
     def setUp(self):
         self.base = {
             "Header": {
@@ -69,57 +69,19 @@ class TestSchema(unittest.TestCase):
             },
         }
 
-    def test_simple(self):
+    def test_get_init_sto(self):
         test = copy.copy(self.base)
-        parse_obj_as(BPX, test)
-
-    def test_table(self):
-        test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
-            "x": [1.0, 2.0],
-            "y": [2.3, 4.5],
-        }
-        parse_obj_as(BPX, test)
-
-    def test_bad_table(self):
-        test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
-            "x": [1.0, 2.0],
-            "y": [2.3],
-        }
-        with self.assertRaisesRegex(
-            ValidationError,
-            "x & y should be same length",
-        ):
-            parse_obj_as(BPX, test)
-
-    def test_function(self):
-        test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * x + 3"
-        parse_obj_as(BPX, test)
-
-    def test_function_with_exp(self):
-        test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "1.0 * exp(x) + 3"
-        parse_obj_as(BPX, test)
-
-    def test_bad_function(self):
-        test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "this is not a function"
-        with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
-
-    def test_to_python_function(self):
-        test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "2.0 * x"
         obj = parse_obj_as(BPX, test)
-        funct = obj.parameterisation.electrolyte.conductivity
-        pyfunct = funct.to_python_function()
-        self.assertEqual(pyfunct(2.0), 4.0)
+        x, y = get_electrode_stoichiometries(0.3, obj)
+        self.assertAlmostEqual(x, 0.304)
+        self.assertAlmostEqual(y, 0.66)
+
+    def test_get_init_conc(self):
+        test = copy.copy(self.base)
+        obj = parse_obj_as(BPX, test)
+        x, y = get_electrode_concentrations(0.7, obj)
+        self.assertAlmostEqual(x, 23060.568)
+        self.assertAlmostEqual(y, 214553.6)
 
 
 if __name__ == "__main__":
