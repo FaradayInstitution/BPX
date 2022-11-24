@@ -2,7 +2,7 @@ import unittest
 import copy
 from pydantic import parse_obj_as
 
-from bpx import BPX, get_initial_stoichiometries, get_initial_concentrations
+from bpx import BPX, get_electrode_stoichiometries, get_electrode_concentrations
 
 
 class TestUtlilities(unittest.TestCase):
@@ -72,14 +72,14 @@ class TestUtlilities(unittest.TestCase):
     def test_get_init_sto(self):
         test = copy.copy(self.base)
         obj = parse_obj_as(BPX, test)
-        x, y = get_initial_stoichiometries(0.3, obj)
+        x, y = get_electrode_stoichiometries(0.3, obj)
         self.assertAlmostEqual(x, 0.304)
         self.assertAlmostEqual(y, 0.66)
 
     def test_get_init_conc(self):
         test = copy.copy(self.base)
         obj = parse_obj_as(BPX, test)
-        x, y = get_initial_concentrations(0.7, obj)
+        x, y = get_electrode_concentrations(0.7, obj)
         self.assertAlmostEqual(x, 23060.568)
         self.assertAlmostEqual(y, 214553.6)
 

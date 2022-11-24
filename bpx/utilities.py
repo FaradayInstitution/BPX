@@ -1,4 +1,4 @@
-def get_initial_stoichiometries(target_soc, bpx):
+def get_electrode_stoichiometries(target_soc, bpx):
     """
     Calculate individual electrode stoichiometries at a particular target
     state of charge, given stoichiometric limits defined by bpx
@@ -29,7 +29,7 @@ def get_initial_stoichiometries(target_soc, bpx):
     return sto_n, sto_p
 
 
-def get_initial_concentrations(target_soc, bpx):
+def get_electrode_concentrations(target_soc, bpx):
     """
     Calculate individual electrode concentrations at a particular target
     state of charge, given stoichiometric limits and maximum concentrations
@@ -50,6 +50,6 @@ def get_initial_concentrations(target_soc, bpx):
     c_n_max = bpx.parameterisation.negative_electrode.maximum_concentration
     c_p_max = bpx.parameterisation.positive_electrode.maximum_concentration
 
-    sto_n_init, sto_p_init = get_initial_stoichiometries(target_soc, bpx)
+    sto_n, sto_p = get_electrode_stoichiometries(target_soc, bpx)
 
-    return sto_n_init * c_n_max, sto_p_init * c_p_max
+    return sto_n * c_n_max, sto_p * c_p_max
