@@ -46,15 +46,15 @@ class Cell(BaseModel):
     )
     cell_external_surface_area: float = Field(
         None,
-        alias="Cell external surface area [m2]",
+        alias="External surface area [m2]",
         example=3.78e-2,
         description="External surface area of cell",
     )
     cell_volume: float = Field(
         None,
-        alias="Cell volume [m3]",
+        alias="Volume [m3]",
         example=1.27e-4,
-        description="Cell volume",
+        description="Volume of the cell",
     )
     number_of_electrodes: int = Field(
         alias="Number of electrode pairs connected in parallel to make a cell",
@@ -124,13 +124,6 @@ class Electrolyte(BaseModel):
         example=0.259,
         description="Cation transference number",
     )
-    conductivity: FloatFunctionTable = Field(
-        alias="Conductivity [S.m-1]",
-        example=1.0,
-        description=(
-            "Electrolyte conductivity (constant or function of concentration)"
-        ),
-    )
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         example="8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6",
@@ -139,17 +132,24 @@ class Electrolyte(BaseModel):
             "of concentration)"
         ),
     )
-    conductivity_activation_energy: float = Field(
-        None,
-        alias="Conductivity activation energy [J.mol-1]",
-        example=17100,
-        description="Activation energy for conductivity in electrolyte",
-    )
     diffusivity_activation_energy: float = Field(
         None,
         alias="Diffusivity activation energy [J.mol-1]",
         example=17100,
         description="Activation energy for diffusivity in electrolyte",
+    )
+    conductivity: FloatFunctionTable = Field(
+        alias="Conductivity [S.m-1]",
+        example=1.0,
+        description=(
+            "Electrolyte conductivity (constant or function of concentration)"
+        ),
+    )
+    conductivity_activation_energy: float = Field(
+        None,
+        alias="Conductivity activation energy [J.mol-1]",
+        example=17100,
+        description="Activation energy for conductivity in electrolyte",
     )
 
 
@@ -172,18 +172,44 @@ class Contact(BaseModel):
 
 
 class Electrode(Contact):
+    initial_concentration: float = Field(
+        alias="Initial concentration [mol.m-3]",
+        example=167920,
+        description="Initial concentration of lithium ions in particles",
+    )
+    maximum_concentration: float = Field(
+        alias="Maximum concentration [mol.m-3]",
+        example=631040,
+        description="Maximum concentration of lithium ions in particles",
+    )
     particle_radius: float = Field(
         alias="Particle radius [m]",
         example=5.86e-6,
         description="Particle radius",
+    )
+    surface_area_per_unit_volume: float = Field(
+        alias="Surface area per unit volume [m-1]",
+        example=382184,
+        description="Particle surface area per unit of volume",
     )
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         example="3.3e-14",
         description=(
             "Lithium ion diffusivity in particle (constant or function "
-            "of concentration)"
+            "of stoichiometry)"
         ),
+    )
+    diffusivity_activation_energy: float = Field(
+        None,
+        alias="Diffusivity activation energy [J.mol-1]",
+        example=17800,
+        description="Activation energy for diffusivity in particles",
+    )
+    conductivity: float = Field(
+        alias="Conductivity [S.m-1]",
+        example=0.18,
+        description=("Electrolyte conductivity (constant)"),
     )
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
@@ -199,46 +225,10 @@ class Electrode(Contact):
         example={"x": [0, 0.1, 1], "y": [-9e-18, -9e-15, -1e-5]},
         description=("Entropic change coefficient, function of particle stoichiometry"),
     )
-    conductivity: float = Field(
-        alias="Conductivity [S.m-1]",
-        example=0.18,
-        description=("Electrolyte conductivity (constant)"),
-    )
-    surface_area_per_unit_volume: float = Field(
-        alias="Surface area per unit volume [m-1]",
-        example=382184,
-        description="Particle surface area per unit of volume",
-    )
-    porosity: float = Field(
-        alias="Porosity",
-        example=0.335,
-        description="Electrolyte volume fraction (porosity)",
-    )
-    transport_efficiency: float = Field(
-        alias="Transport efficiency",
-        example=0.1939,
-        description="Transport efficiency / inverse MacMullin number",
-    )
     reaction_rate_constant: float = Field(
         alias="Reaction rate constant [mol.m-2.s-1]",
         example=1e-10,
         description="Normalised reaction rate K (see notes)",
-    )
-    initial_concentration: float = Field(
-        alias="Initial concentration [mol.m-3]",
-        example=167920,
-        description="Initial concentration of lithium ions in particles",
-    )
-    maximum_concentration: float = Field(
-        alias="Maximum concentration [mol.m-3]",
-        example=631040,
-        description="Maximum concentration of lithium ions in particles",
-    )
-    diffusivity_activation_energy: float = Field(
-        None,
-        alias="Diffusivity activation energy [J.mol-1]",
-        example=17800,
-        description="Activation energy for diffusivity in particles",
     )
     reaction_rate_constant_activation_energy: float = Field(
         None,
