@@ -172,10 +172,15 @@ class Contact(BaseModel):
 
 
 class Electrode(Contact):
-    initial_concentration: float = Field(
-        alias="Initial concentration [mol.m-3]",
-        example=167920,
-        description="Initial concentration of lithium ions in particles",
+    minimum_stoichiometry: float = Field(
+        alias="Minimum stoichiometry",
+        example=0.1,
+        description="Minimum stoichiometry",
+    )
+    maximum_stoichiometry: float = Field(
+        alias="Maximum stoichiometry",
+        example=0.9,
+        description="Maximum stoichiometry",
     )
     maximum_concentration: float = Field(
         alias="Maximum concentration [mol.m-3]",

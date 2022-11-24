@@ -22,7 +22,7 @@ def parse_bpx_obj(bpx: dict) -> BPX:
     Parameters
     ----------
 
-    box: dict
+    bpx: dict
         a dict object in bpx format
 
     Returns
@@ -38,7 +38,7 @@ def parse_bpx_str(bpx: str) -> BPX:
     Parameters
     ----------
 
-    box: str
+    bpx: str
         a json formatted string in bpx format
 
     Returns
