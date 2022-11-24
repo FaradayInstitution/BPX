@@ -6,9 +6,9 @@ def get_electrode_stoichiometries(target_soc, bpx):
     Parameters
     ----------
     target_soc : float
-        Target initial SOC. Must be between 0 and 1.
+        Target state of charge. Must be between 0 and 1.
     bpx : :class:`BPX`
-        A parsed BPX model
+        A parsed BPX model.
 
     Returns
     -------
@@ -38,9 +38,9 @@ def get_electrode_concentrations(target_soc, bpx):
     Parameters
     ----------
     target_soc : float
-        Target initial SOC. Must be between 0 and 1.
+        Target state of charge. Must be between 0 and 1.
     bpx : :class:`BPX`
-        A parsed BPX model
+        A parsed BPX model.
 
     Returns
     -------
