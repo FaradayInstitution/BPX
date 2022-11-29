@@ -40,7 +40,7 @@ my_params = bpx.parse_bpx_file(filename)
 print('Initial temperature of cell:', my_params.parameterisation.cell.initial_temperature)
 ```
 
-Alternatively, you can export the `BPX` as a dictionary and use the string names (aliases) of the parameters from the standard
+Alternatively, you can export the `BPX` object as a dictionary and use the string names (aliases) of the parameters from the standard
 ```python
 my_params_dict = my_params.dict(by_alias=True)
 print('Initial temperature of cell:', my_params_dict["Parameterisation"]["Cell"]["Initial temperature [K]"])
