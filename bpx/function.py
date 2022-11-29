@@ -11,7 +11,7 @@ class Function(str):
     """
     An expression in Python syntax. Only contains:
         - numbers
-        - operators: * / - + ^
+        - operators: * / - + **
         - math functions: exp, tanh,
         - single variable 'x'
     """
@@ -25,7 +25,7 @@ class Function(str):
 
     @classmethod
     def __modify_schema__(cls, field_schema):
-        field_schema.update(examples=["1 + x", "1.9793 * exp(-39.3631 * x)" "2 * x^2"])
+        field_schema.update(examples=["1 + x", "1.9793 * exp(-39.3631 * x)" "2 * x**2"])
 
     @classmethod
     def validate(cls, v: str) -> Function:

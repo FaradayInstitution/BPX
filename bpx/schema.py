@@ -44,13 +44,13 @@ class Cell(BaseModel):
         description="Electrode cross-sectional area",
         example=1.68e-2,
     )
-    cell_external_surface_area: float = Field(
+    external_surface_area: float = Field(
         None,
         alias="External surface area [m2]",
         example=3.78e-2,
         description="External surface area of cell",
     )
-    cell_volume: float = Field(
+    volume: float = Field(
         None,
         alias="Volume [m3]",
         example=1.27e-4,

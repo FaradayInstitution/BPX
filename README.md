@@ -37,7 +37,13 @@ my_params = bpx.parse_bpx_file(filename)
 `my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. For example, you can print out the initial temperature of the cell using
 
 ```python
-print('Initial temperature of cell:', my_params.parameterisation.initial_temperature)
+print('Initial temperature of cell:', my_params.parameterisation.cell.initial_temperature)
+```
+
+Alternatively, you can export the `BPX` as a dictionary and use the string names (aliases) of the parameters from the standard
+```python
+my_params_dict = my_params.dict(by_alias=True)
+print('Initial temperature of cell:', my_params_dict["Parameterisation"]["Cell"]["Initial temperature [K]"])
 ```
 
 If you want to pretty print the entire object, you can use the `devtools` package to do this (remember to `pip install devtools`)
@@ -47,7 +53,7 @@ from devtools import pprint
 pprint(my_params)
 ```
 
-You can convert any `Function` objects in your bpx to regular callable Python functions, for example:
+You can convert any `Function` objects in `BPX` to regular callable Python functions, for example:
 
 ```python
 positive_electrode_diffusivity = my_params.parameterisation.positive_electrode.diffusivity.to_python_function()
@@ -55,7 +61,7 @@ diff_at_one = positive_electrode_diffusivity(1.0)
 print('positive electrode diffusivity at x = 1.0:', diff_at_one)
 ```
 
-If you want to output the complete json schema in order to build a custom tool yourself, you can do so:
+If you want to output the complete JSON schema in order to build a custom tool yourself, you can do so:
 
 ```python
 print(bpx.BPX.schema_json(indent=2))
