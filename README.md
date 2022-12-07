@@ -4,6 +4,7 @@ An implementation of the BPX battery parameter exchange format in Pydantic.
 
 Features a Pydantic-based parser for JSON files in the BPX format, which validates your file against the schema.
 
+To see how to use BPX with PyBaMM, check out the [BPX example repository](https://github.com/pybamm-team/bpx-example).
 ## Prerequisites
 
 - Python 3+
