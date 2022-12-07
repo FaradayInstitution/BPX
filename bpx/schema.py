@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import List, Literal, Union, Dict
 
 from pydantic import BaseModel, Field
 
@@ -243,7 +243,7 @@ class Electrode(Contact):
     )
 
 
-class Experimental(BaseModel):
+class Experiment(BaseModel):
     time: List[float] = Field(
         alias="Time [s]",
         example=[0, 0.1, 0.2, 0.3, 0.4],
@@ -285,13 +285,9 @@ class Parameterisation(BaseModel):
     )
 
 
-class Validation(BaseModel):
-    experimental: Experimental = Field(None, alias="Experimental")
-
-
 class BPX(BaseModel):
     header: Header = Field(
         alias="Header",
     )
     parameterisation: Parameterisation = Field(alias="Parameterisation")
-    validation: Validation = Field(None, alias="Validation")
+    validation: Dict[str, Experiment] = Field(None, alias="Validation")
