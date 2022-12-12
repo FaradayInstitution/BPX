@@ -127,7 +127,7 @@ class TestSchema(unittest.TestCase):
         with self.assertRaises(ValidationError):
             parse_obj_as(BPX, test)
 
-    def tets_validation_data(self):
+    def test_validation_data(self):
         test = copy.copy(self.base)
         test["Validation"] = {
             "Experiment 1": {
