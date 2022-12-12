@@ -1,13 +1,18 @@
 from typing import List, Literal, Union, Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Extra
 
 from bpx import Function, InterpolatedTable
 
 FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
 
-class Header(BaseModel):
+class ExtraBaseModel(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+
+class Header(ExtraBaseModel):
     bpx: float = Field(
         alias="BPX",
         example=1.0,
@@ -38,7 +43,7 @@ class Header(BaseModel):
     )
 
 
-class Cell(BaseModel):
+class Cell(ExtraBaseModel):
     electrode_area: float = Field(
         alias="Electrode area [m2]",
         description="Electrode cross-sectional area",
@@ -113,7 +118,7 @@ class Cell(BaseModel):
     )
 
 
-class Electrolyte(BaseModel):
+class Electrolyte(ExtraBaseModel):
     initial_concentration: float = Field(
         alias="Initial concentration [mol.m-3]",
         example=1000,
@@ -153,7 +158,7 @@ class Electrolyte(BaseModel):
     )
 
 
-class Contact(BaseModel):
+class Contact(ExtraBaseModel):
     thickness: float = Field(
         alias="Thickness [m]",
         example=85.2e-6,
@@ -243,7 +248,7 @@ class Electrode(Contact):
     )
 
 
-class Experiment(BaseModel):
+class Experiment(ExtraBaseModel):
     time: List[float] = Field(
         alias="Time [s]",
         example=[0, 0.1, 0.2, 0.3, 0.4],
@@ -267,7 +272,7 @@ class Experiment(BaseModel):
     )
 
 
-class Parameterisation(BaseModel):
+class Parameterisation(ExtraBaseModel):
     cell: Cell = Field(
         alias="Cell",
     )
@@ -285,7 +290,7 @@ class Parameterisation(BaseModel):
     )
 
 
-class BPX(BaseModel):
+class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
