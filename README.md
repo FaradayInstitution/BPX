@@ -1,12 +1,12 @@
 # BPX
 
-An implementation of the Battery Parameter eXchange (BPX) format in Pydantic. BPX, an outcome of the Faraday Institution Multi-scale Modelling project, is an open standard for physics-based Li-ion battery models that has been developed to reduce costs and time-to-market through a common definition of physics-based battery models that can be used widely across industry. To find out more, visit the [BPX website](https://bpxstandard.com/).
+An implementation of the Battery Parameter eXchange (BPX) format in Pydantic. BPX, an outcome of the Faraday Institution [Multi-scale Modelling project](https://www.faraday.ac.uk/research/lithium-ion/battery-system-modelling/), is an open standard for physics-based Li-ion battery models that has been developed to reduce costs and time-to-market through a common definition of physics-based battery models that can be used widely across industry. To find out more, visit the [BPX website](https://bpxstandard.com/).
 
 This repository features a Pydantic-based parser for JSON files in the BPX format, which validates your file against the schema.
 
 To support the new open standard, [About:Energy](https://www.aboutenergy.io/) have supplied two parameters sets for an NMC and LFP cell. The BPX files and associated examples and information can be found on the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/).
 
-To see how to use BPX with PyBaMM, check out the [BPX example repository](https://github.com/pybamm-team/bpx-example).
+To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX example repository](https://github.com/pybamm-team/bpx-example).
 ## Prerequisites
 
 - Python 3+
