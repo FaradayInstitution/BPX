@@ -1,5 +1,5 @@
 # BPX
-![tests](https://github.com/pybamm-team/BPX/actions/workflows/test.yml/test.svg)
+![tests](https://github.com/pybamm-team/BPX/actions/workflows/test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/pybamm-team/BPX/branch/main/graph/badge.svg?token=Krv0JW3gYZ)](https://codecov.io/gh/pybamm-team/BPX)
 
 An implementation of the Battery Parameter eXchange (BPX) format in Pydantic. BPX, an outcome of the Faraday Institution [Multi-scale Modelling project](https://www.faraday.ac.uk/research/lithium-ion/battery-system-modelling/), is an open standard for physics-based Li-ion battery models that has been developed to reduce costs and time-to-market through a common definition of physics-based battery models that can be used widely across industry. To find out more, visit the [BPX website](https://bpxstandard.com/).
