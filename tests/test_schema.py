@@ -121,6 +121,29 @@ class TestSchema(unittest.TestCase):
         pyfunct = funct.to_python_function()
         self.assertEqual(pyfunct(2.0), 4.0)
 
+    def test_bad_input(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["Electrolyte"]["bad"] = "this shouldn't be here"
+        with self.assertRaises(ValidationError):
+            parse_obj_as(BPX, test)
+
+    def test_validation_data(self):
+        test = copy.copy(self.base)
+        test["Validation"] = {
+            "Experiment 1": {
+                "Time [s]": [0, 1000, 2000],
+                "Current [A]": [-0.625, -0.625, -0.625],
+                "Voltage [V]": [4.19367569, 4.1677888, 4.14976386],
+                "Temperature [K]": [298.15, 298.15, 298.15],
+            },
+            "Experiment 2": {
+                "Time [s]": [0, 1000],
+                "Current [A]": [-0.625, -0.625],
+                "Voltage [V]": [4.19367569, 4.1677888],
+                "Temperature [K]": [298.15, 298.15],
+            },
+        }
+
 
 if __name__ == "__main__":
     unittest.main()
