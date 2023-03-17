@@ -22,10 +22,10 @@ python3 -m venv env
 source env/bin/activate
 ```
 
-Install the `BPX` module from the repository on GitHub
+Install the `BPX` module using pip
 
 ```bash
-pip install git+https://github.com/pybamm-team/BPX.git
+pip install bpx
 ```
 
 ## Usage
