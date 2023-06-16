@@ -57,7 +57,7 @@ class TestUtlilities(unittest.TestCase):
                     "Porosity": 0.335,
                     "Transport efficiency": 0.1939,
                     "Reaction rate constant [mol.m-2.s-1]": 1e-10,
-                    "Maximum concentration [mol.m-3]": 631040,
+                    "Maximum concentration [mol.m-3]": 63104.0,
                     "Minimum stoichiometry": 0.1,
                     "Maximum stoichiometry": 0.9,
                 },
@@ -81,7 +81,7 @@ class TestUtlilities(unittest.TestCase):
         obj = parse_obj_as(BPX, test)
         x, y = get_electrode_concentrations(0.7, obj)
         self.assertAlmostEqual(x, 23060.568)
-        self.assertAlmostEqual(y, 214553.6)
+        self.assertAlmostEqual(y, 21455.36)
 
 
 if __name__ == "__main__":
