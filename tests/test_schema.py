@@ -57,7 +57,7 @@ class TestSchema(unittest.TestCase):
                     "Porosity": 0.335,
                     "Transport efficiency": 0.1939,
                     "Reaction rate constant [mol.m-2.s-1]": 1e-10,
-                    "Maximum concentration [mol.m-3]": 631040,
+                    "Maximum concentration [mol.m-3]": 63104.0,
                     "Minimum stoichiometry": 0.1,
                     "Maximum stoichiometry": 0.9,
                 },
