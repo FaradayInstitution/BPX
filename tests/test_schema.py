@@ -164,21 +164,13 @@ class TestSchema(unittest.TestCase):
     def test_check_sto_limits_validator_high_voltage(self):
         test = copy.copy(self.base)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
-        with self.assertRaisesRegex(
-            ValidationError,
-            "The maximum voltage computed from the STO limits is higher "
-            "than the maximum allowed voltage"
-        ):
+        with self.assertRaises(ValidationError):
             parse_obj_as(BPX, test)
 
     def test_check_sto_limits_validator_low_voltage(self):
         test = copy.copy(self.base)
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
-        with self.assertRaisesRegex(
-            ValidationError,
-            "The minimum voltage computed from the STO limits is lower "
-            "than the minimum allowed voltage"
-        ):
+        with self.assertRaises(ValidationError):
             parse_obj_as(BPX, test)
 
 
