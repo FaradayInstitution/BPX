@@ -23,7 +23,7 @@ class TestSchema(unittest.TestCase):
                     "Number of electrode pairs connected in parallel to make a cell": 1,
                     "Nominal cell capacity [A.h]": 5.0,
                     "Lower voltage cut-off [V]": 2.0,
-                    "Upper voltage cut-off [V]": 4.0,
+                    "Upper voltage cut-off [V]": 4.5,
                 },
                 "Electrolyte": {
                     "Initial concentration [mol.m-3]": 1000,
@@ -37,29 +37,40 @@ class TestSchema(unittest.TestCase):
                     "Particle radius [m]": 5.86e-6,
                     "Thickness [m]": 85.2e-6,
                     "Diffusivity [m2.s-1]": 3.3e-14,
-                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                    "OCP [V]": (
+                        "9.47057878e-01 * exp(-1.59418743e+02  * x) - 3.50928033e+04 + "
+                        "1.64230269e-01 * tanh(-4.55509094e+01 * (x - 3.24116012e-02 )) + "
+                        "3.69968491e-02 * tanh(-1.96718868e+01 * (x - 1.68334476e-01)) + "
+                        "1.91517003e+04 * tanh(3.19648312e+00 * (x - 1.85139824e+00)) + "
+                        "5.42448511e+04 * tanh(-3.19009848e+00 * (x - 2.01660395e+00))"
+                    ),
                     "Conductivity [S.m-1]": 215.0,
                     "Surface area per unit volume [m-1]": 383959,
                     "Porosity": 0.25,
                     "Transport efficiency": 0.125,
                     "Reaction rate constant [mol.m-2.s-1]": 1e-10,
                     "Maximum concentration [mol.m-3]": 33133,
-                    "Minimum stoichiometry": 0.01,
-                    "Maximum stoichiometry": 0.99,
+                    "Minimum stoichiometry": 0.005504,
+                    "Maximum stoichiometry": 0.75668,
                 },
                 "Positive electrode": {
                     "Particle radius [m]": 5.22e-6,
                     "Thickness [m]": 75.6e-6,
                     "Diffusivity [m2.s-1]": 4.0e-15,
-                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                    "OCP [V]": (
+                        "-3.04420906 * x + 10.04892207 - "
+                        "0.65637536 * tanh(-4.02134095 * (x - 0.80063948)) + "
+                        "4.24678547 * tanh(12.17805062 * (x - 7.57659337)) - "
+                        "0.3757068 * tanh(59.33067782 * (x - 0.99784492))"
+                    ),
                     "Conductivity [S.m-1]": 0.18,
                     "Surface area per unit volume [m-1]": 382184,
                     "Porosity": 0.335,
                     "Transport efficiency": 0.1939,
                     "Reaction rate constant [mol.m-2.s-1]": 1e-10,
                     "Maximum concentration [mol.m-3]": 63104.0,
-                    "Minimum stoichiometry": 0.1,
-                    "Maximum stoichiometry": 0.9,
+                    "Minimum stoichiometry": 0.42424,
+                    "Maximum stoichiometry": 0.96210,
                 },
                 "Separator": {
                     "Thickness [m]": 1.2e-5,
@@ -143,6 +154,32 @@ class TestSchema(unittest.TestCase):
                 "Temperature [K]": [298.15, 298.15],
             },
         }
+
+    def test_check_sto_limits_validator(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
+        test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
+        parse_obj_as(BPX, test)
+
+    def test_check_sto_limits_validator_high_voltage(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
+        with self.assertRaisesRegex(
+            ValidationError,
+            "The maximum voltage computed from the STO limits is higher "
+            "than the maximum allowed voltage"
+        ):
+            parse_obj_as(BPX, test)
+
+    def test_check_sto_limits_validator_low_voltage(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
+        with self.assertRaisesRegex(
+            ValidationError,
+            "The minimum voltage computed from the STO limits is lower "
+            "than the minimum allowed voltage"
+        ):
+            parse_obj_as(BPX, test)
 
 
 if __name__ == "__main__":
