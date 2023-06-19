@@ -47,6 +47,9 @@ def get_electrode_concentrations(target_soc, bpx):
     c_n, c_p
         The electrode concentrations that give the target state of charge
     """
+    if target_soc < 0 or target_soc > 1:
+        raise ValueError("Target SOC should be between 0 and 1")
+
     c_n_max = bpx.parameterisation.negative_electrode.maximum_concentration
     c_p_max = bpx.parameterisation.positive_electrode.maximum_concentration
 

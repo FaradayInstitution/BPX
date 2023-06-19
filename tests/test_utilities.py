@@ -83,6 +83,42 @@ class TestUtlilities(unittest.TestCase):
         self.assertAlmostEqual(x, 23060.568)
         self.assertAlmostEqual(y, 21455.36)
 
+    def test_get_init_sto_negative_target_soc(self):
+        test = copy.copy(self.base)
+        obj = parse_obj_as(BPX, test)
+        with self.assertRaisesRegex(
+            ValueError,
+            "Target SOC should be between 0 and 1",
+        ):
+            get_electrode_stoichiometries(-0.1, obj)
+
+    def test_get_init_sto_bad_target_soc(self):
+        test = copy.copy(self.base)
+        obj = parse_obj_as(BPX, test)
+        with self.assertRaisesRegex(
+            ValueError,
+            "Target SOC should be between 0 and 1",
+        ):
+            get_electrode_stoichiometries(1.1, obj)
+
+    def test_get_init_conc_negative_target_soc(self):
+        test = copy.copy(self.base)
+        obj = parse_obj_as(BPX, test)
+        with self.assertRaisesRegex(
+            ValueError,
+            "Target SOC should be between 0 and 1",
+        ):
+            get_electrode_concentrations(-0.5, obj)
+
+    def test_get_init_conc_bad_target_soc(self):
+        test = copy.copy(self.base)
+        obj = parse_obj_as(BPX, test)
+        with self.assertRaisesRegex(
+            ValueError,
+            "Target SOC should be between 0 and 1",
+        ):
+            get_electrode_concentrations(1.05, obj)
+
 
 if __name__ == "__main__":
     unittest.main()

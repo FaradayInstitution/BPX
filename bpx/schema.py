@@ -291,17 +291,23 @@ class Parameterisation(ExtraBaseModel):
 
     # Validates that the STO limits subbed into the OCPs give
     # the correct voltage limits.
+    # Works if both OCPs are defined as functions.
     # https://docs.pydantic.dev/latest/usage/validators/#root-validators
     @root_validator
     def check_sto_limits(cls, values):
+        try:
+            ocp_n = values.get("negative_electrode").ocp.to_python_function()
+            ocp_p = values.get("positive_electrode").ocp.to_python_function()
+        except AttributeError:
+            # OCPs defined as interpolated tables; do nothing
+            return values
+
         sto_n_min = values.get("negative_electrode").minimum_stoichiometry
         sto_n_max = values.get("negative_electrode").maximum_stoichiometry
         sto_p_min = values.get("positive_electrode").minimum_stoichiometry
         sto_p_max = values.get("positive_electrode").maximum_stoichiometry
         V_min = values.get("cell").lower_voltage_cutoff
         V_max = values.get("cell").upper_voltage_cutoff
-        ocp_n = values.get("negative_electrode").ocp.to_python_function()
-        ocp_p = values.get("positive_electrode").ocp.to_python_function()
 
         # Checks the maximum voltage estimated from STO
         V_max_sto = ocp_p(sto_p_min) - ocp_n(sto_n_max)
