@@ -189,7 +189,7 @@ class Electrode(Contact):
     )
     maximum_concentration: float = Field(
         alias="Maximum concentration [mol.m-3]",
-        example=631040,
+        example=63104.0,
         description="Maximum concentration of lithium ions in particles",
     )
     particle_radius: float = Field(
