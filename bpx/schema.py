@@ -279,10 +279,10 @@ class Parameterisation(ExtraBaseModel):
     electrolyte: Electrolyte = Field(
         alias="Electrolyte",
     )
-    negative_electrode: Electrode = Field(
+    negative_electrode: Union[Electrode, Dict[str, Electrode]] = Field(
         alias="Negative electrode",
     )
-    positive_electrode: Electrode = Field(
+    positive_electrode: Union[Electrode, Dict[str, Electrode]] = Field(
         alias="Positive electrode",
     )
     separator: Contact = Field(
