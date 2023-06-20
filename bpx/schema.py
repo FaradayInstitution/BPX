@@ -176,7 +176,7 @@ class Contact(ExtraBaseModel):
     )
 
 
-class Electrode(Contact):
+class ElectrodeChemistry(ExtraBaseModel):
     minimum_stoichiometry: float = Field(
         alias="Minimum stoichiometry",
         example=0.1,
@@ -216,11 +216,6 @@ class Electrode(Contact):
         example=17800,
         description="Activation energy for diffusivity in particles",
     )
-    conductivity: float = Field(
-        alias="Conductivity [S.m-1]",
-        example=0.18,
-        description=("Electrolyte conductivity (constant)"),
-    )
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
@@ -246,6 +241,22 @@ class Electrode(Contact):
         example=27010,
         description="Activation energy of reaction rate constant in particles",
     )
+
+
+class ElectrodeOther(Contact):
+    conductivity: float = Field(
+        alias="Conductivity [S.m-1]",
+        example=0.18,
+        description=("Electrolyte conductivity (constant)"),
+    )
+
+
+class Electrode(ElectrodeOther, ElectrodeChemistry):
+    pass
+
+
+class ElectrodeBlended(ElectrodeOther):
+    chemistry: Dict[str, ElectrodeChemistry] = Field(alias="Chemistry")
 
 
 class Experiment(ExtraBaseModel):
@@ -279,10 +290,10 @@ class Parameterisation(ExtraBaseModel):
     electrolyte: Electrolyte = Field(
         alias="Electrolyte",
     )
-    negative_electrode: Union[Electrode, Dict[str, Electrode]] = Field(
+    negative_electrode: Union[Electrode, ElectrodeBlended] = Field(
         alias="Negative electrode",
     )
-    positive_electrode: Union[Electrode, Dict[str, Electrode]] = Field(
+    positive_electrode: Union[Electrode, ElectrodeBlended] = Field(
         alias="Positive electrode",
     )
     separator: Contact = Field(
