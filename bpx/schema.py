@@ -289,11 +289,10 @@ class Parameterisation(ExtraBaseModel):
         alias="Separator",
     )
 
-    # Validates that the STO limits subbed into the OCPs give
-    # the correct voltage limits.
+    # Validates that the STO limits subbed into the OCPs give the correct voltage limits.
     # Works if both OCPs are defined as functions.
     # https://docs.pydantic.dev/latest/usage/validators/#root-validators
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def check_sto_limits(cls, values):
         try:
             ocp_n = values.get("negative_electrode").ocp.to_python_function()
