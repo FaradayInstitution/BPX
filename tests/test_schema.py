@@ -52,7 +52,7 @@ class TestSchema(unittest.TestCase):
                     "Conductivity [S.m-1]": 0.18,
                     "Porosity": 0.335,
                     "Transport efficiency": 0.1939,
-                    "Chemistry": {
+                    "Particle": {
                         "Primary": {
                             "Particle radius [m]": 5.22e-6,
                             "Diffusivity [m2.s-1]": 4.0e-15,
