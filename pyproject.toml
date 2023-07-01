@@ -8,7 +8,7 @@ authors = [{name = "Martin Robinson", email = "martin.robinson@dtc.ox.ac.uk"}]
 readme = "README.md"
 dynamic = ["version", "description"]
 dependencies = [
-    "pydantic",
+    "pydantic<2",
     "pyparsing",
 ]
 
