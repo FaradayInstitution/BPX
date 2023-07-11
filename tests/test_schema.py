@@ -1,8 +1,15 @@
 import unittest
 import copy
 from pydantic import parse_obj_as, ValidationError
+from typing_extensions import Any
 
 from bpx import BPX
+
+from pydantic import TypeAdapter
+
+# bpxobject = BPX()
+
+adapter = TypeAdapter(dict[str, dict[str, float | str | dict[str, Any]]])
 
 
 class TestSchema(unittest.TestCase):
@@ -71,7 +78,7 @@ class TestSchema(unittest.TestCase):
 
     def test_simple(self):
         test = copy.copy(self.base)
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
     def test_table(self):
         test = copy.copy(self.base)
@@ -79,7 +86,7 @@ class TestSchema(unittest.TestCase):
             "x": [1.0, 2.0],
             "y": [2.3, 4.5],
         }
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
     def test_bad_table(self):
         test = copy.copy(self.base)
@@ -91,19 +98,19 @@ class TestSchema(unittest.TestCase):
             ValidationError,
             "x & y should be same length",
         ):
-            parse_obj_as(BPX, test)
+            adapter.validate_python(test)
 
     def test_function(self):
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * x + 3"
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
     def test_function_with_exp(self):
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"][
             "Conductivity [S.m-1]"
         ] = "1.0 * exp(x) + 3"
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
     def test_bad_function(self):
         test = copy.copy(self.base)
@@ -111,12 +118,14 @@ class TestSchema(unittest.TestCase):
             "Conductivity [S.m-1]"
         ] = "this is not a function"
         with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
+            adapter.validate_python(test)
 
     def test_to_python_function(self):
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "2.0 * x"
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
+        # print(obj)
+        print(bpxobject)
         funct = obj.parameterisation.electrolyte.conductivity
         pyfunct = funct.to_python_function()
         self.assertEqual(pyfunct(2.0), 4.0)
@@ -125,7 +134,7 @@ class TestSchema(unittest.TestCase):
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["bad"] = "this shouldn't be here"
         with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
+            adapter.validate_python(test)
 
     def test_validation_data(self):
         test = copy.copy(self.base)

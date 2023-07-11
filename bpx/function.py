@@ -2,7 +2,9 @@ from __future__ import annotations
 import copy
 from importlib import util
 import tempfile
-from typing import Callable
+from typing import Callable, Any
+from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic_core import core_schema
 
 from bpx import ExpressionParser
 
@@ -24,8 +26,8 @@ class Function(str):
         yield cls.validate
 
     @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(examples=["1 + x", "1.9793 * exp(-39.3631 * x)" "2 * x**2"])
+    def __get_pydantic_json_schema__(cls, field_schema):
+        field_schema.update(examples=["1 + x", "1.9793 * exp(-39.3631 * x)", "2 * x**2"])
 
     @classmethod
     def validate(cls, v: str) -> Function:

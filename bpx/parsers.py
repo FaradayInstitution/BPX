@@ -30,7 +30,7 @@ def parse_bpx_obj(bpx: dict) -> BPX:
     BPX:
         a parsed BPX model
     """
-    return BPX.parse_obj(bpx)
+    return BPX.model_validate(bpx)
 
 
 def parse_bpx_str(bpx: str) -> BPX:
@@ -46,4 +46,4 @@ def parse_bpx_str(bpx: str) -> BPX:
     BPX:
         a parsed BPX model
     """
-    return BPX.parse_raw(bpx)
+    return BPX.model_validate_json(bpx)
