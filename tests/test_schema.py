@@ -144,6 +144,26 @@ class TestSchema(unittest.TestCase):
             },
         }
 
+    def test_user_defined(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["User defined"] = {
+            "a": 1,
+            "b": 2.0,
+            "c": 3.0,
+        }
+        obj = parse_obj_as(BPX, test)
+        self.assertEqual(obj.parameterisation.user_defined.a, 1)
+        self.assertEqual(obj.parameterisation.user_defined.b, 2)
+        self.assertEqual(obj.parameterisation.user_defined.c, 3)
+
+    def test_bad_user_defined(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["User defined"] = {
+            "bad": "strings aren't allowed",
+        }
+        with self.assertRaises(ValidationError):
+            parse_obj_as(BPX, test)
+
 
 if __name__ == "__main__":
     unittest.main()

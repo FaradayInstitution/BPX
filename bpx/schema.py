@@ -1,10 +1,10 @@
-from typing import List, Literal, Union, Dict
+from typing import List, Literal, Union, Dict, get_args
 
-from pydantic import BaseModel, Field, Extra
+from pydantic import BaseModel, Field, Extra, root_validator
 
 from bpx import Function, InterpolatedTable
 
-FloatFunctionTable = Union[float, Function, InterpolatedTable]
+FloatFunctionTable = Union[int, float, Function, InterpolatedTable]
 
 
 class ExtraBaseModel(BaseModel):
@@ -248,6 +248,18 @@ class Electrode(Contact):
     )
 
 
+class UserDefined(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    @root_validator(pre=True)
+    def validate_extra_fields(cls, values):
+        for k, v in values.items():
+            if not isinstance(v, get_args(FloatFunctionTable)):
+                raise TypeError(f"{k} must be of type 'FloatFunctionTable'")
+        return values
+
+
 class Experiment(ExtraBaseModel):
     time: List[float] = Field(
         alias="Time [s]",
@@ -287,6 +299,10 @@ class Parameterisation(ExtraBaseModel):
     )
     separator: Contact = Field(
         alias="Separator",
+    )
+    user_defined: UserDefined = Field(
+        None,
+        alias="User defined",
     )
 
 
