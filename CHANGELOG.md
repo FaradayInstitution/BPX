@@ -1,4 +1,4 @@
-# [v0.3.0](https://github.com/pybamm-team/BPX/releases/tag/v0.3.1)
+# [v0.3.1](https://github.com/pybamm-team/BPX/releases/tag/v0.3.1)
 - Temporarily pin Pydantic version ([#35](https://github.com/pybamm-team/BPX/pull/35))
 # [v0.3.0](https://github.com/pybamm-team/BPX/releases/tag/v0.3.0)
 
