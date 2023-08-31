@@ -1,3 +1,7 @@
+# Unreleased
+- Allow user-defined parameters to be added using the field ["Parameterisation"]["User-Defined"] ([#44](https://github.com/pybamm-team/BPX/pull/44))
+
+
 # [v0.3.0](https://github.com/pybamm-team/BPX/releases/tag/v0.3.1)
 - Temporarily pin Pydantic version ([#35](https://github.com/pybamm-team/BPX/pull/35))
 # [v0.3.0](https://github.com/pybamm-team/BPX/releases/tag/v0.3.0)
