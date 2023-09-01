@@ -41,6 +41,16 @@ class Function(str):
         return f"Function({super().__repr__()})"
 
     def to_python_function(self, preamble: str = None) -> Callable:
+        """
+        Return a python function that can be called with a single argument 'x'
+
+        Parameters
+        ----------
+            preamble: ste, options
+                a string of python code to be prepended to the function
+                definition. This can be used to import modules or define
+                helper functions.
+        """
         if preamble is None:
             preamble = copy.copy(self.default_preamble)
         preamble += "\n\n"
