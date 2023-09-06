@@ -163,8 +163,8 @@ class TestSchema(unittest.TestCase):
     def test_bad_dfn(self):
         test = copy.copy(self.base_spm)
         test["Header"]["Model"] = "DFN"
-        with self.assertRaisesRegex(
-            ValidationError,
+        with self.assertWarnsRegex(
+            UserWarning,
             "The model type DFN does not correspond to the parameter set",
         ):
             parse_obj_as(BPX, test)
@@ -172,8 +172,8 @@ class TestSchema(unittest.TestCase):
     def test_bad_spme(self):
         test = copy.copy(self.base_spm)
         test["Header"]["Model"] = "SPMe"
-        with self.assertRaisesRegex(
-            ValidationError,
+        with self.assertWarnsRegex(
+            UserWarning,
             "The model type SPMe does not correspond to the parameter set",
         ):
             parse_obj_as(BPX, test)
@@ -181,8 +181,8 @@ class TestSchema(unittest.TestCase):
     def test_bad_spm(self):
         test = copy.copy(self.base)
         test["Header"]["Model"] = "SPM"
-        with self.assertRaisesRegex(
-            ValidationError,
+        with self.assertWarnsRegex(
+            UserWarning,
             "The model type SPM does not correspond to the parameter set",
         ):
             parse_obj_as(BPX, test)

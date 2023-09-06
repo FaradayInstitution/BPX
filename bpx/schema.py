@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field, Extra, root_validator
 
 from bpx import Function, InterpolatedTable
 
+from warnings import warn
+
 FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
 
@@ -342,9 +344,6 @@ class BPX(ExtraBaseModel):
             ("Parameterisation", "SPMe"),
             ("ParameterisationSPM", "SPM"),
         ]
-        if (parameter_class_name, model) in allowed_combinations:
-            return values
-        else:
-            raise ValueError(
-                f"The model type {model} does not correspond to the parameter set"
-            )
+        if (parameter_class_name, model) not in allowed_combinations:
+            warn(f"The model type {model} does not correspond to the parameter set")
+        return values
