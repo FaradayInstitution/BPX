@@ -322,13 +322,13 @@ class TestSchema(unittest.TestCase):
     def test_check_sto_limits_validator_high_voltage(self):
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
-        with self.assertRaises(ValidationError):
+        with self.assertWarns(UserWarning):
             parse_obj_as(BPX, test)
 
     def test_check_sto_limits_validator_low_voltage(self):
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
-        with self.assertRaises(ValidationError):
+        with self.assertWarns(UserWarning):
             parse_obj_as(BPX, test)
 
 

@@ -319,7 +319,7 @@ def check_sto_limits(cls, values):
     # Checks the maximum voltage estimated from STO
     V_max_sto = ocp_p(sto_p_min) - ocp_n(sto_n_max)
     if V_max_sto > V_max:
-        raise ValueError(
+        warn(
             f"The maximum voltage computed from the STO limits ({V_max_sto} V) "
             f"is higher than the maximum allowed voltage ({V_max} V)"
         )
@@ -327,7 +327,7 @@ def check_sto_limits(cls, values):
     # Checks the minimum voltage estimated from STO
     V_min_sto = ocp_p(sto_p_max) - ocp_n(sto_n_min)
     if V_min_sto < V_min:
-        raise ValueError(
+        warn(
             f"The minimum voltage computed from the STO limits ({V_min_sto} V) "
             f"is lower than the minimum allowed voltage ({V_min} V)"
         )
