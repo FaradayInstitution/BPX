@@ -1,8 +1,10 @@
 from typing import List, Literal, Union, Dict
 
-from pydantic import BaseModel, Field, Extra
+from pydantic import BaseModel, Field, Extra, root_validator
 
 from bpx import Function, InterpolatedTable
+
+from warnings import warn
 
 FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
@@ -158,12 +160,15 @@ class Electrolyte(ExtraBaseModel):
     )
 
 
-class Contact(ExtraBaseModel):
+class ContactBase(ExtraBaseModel):
     thickness: float = Field(
         alias="Thickness [m]",
         example=85.2e-6,
         description="Contact thickness",
     )
+
+
+class Contact(ContactBase):
     porosity: float = Field(
         alias="Porosity",
         example=0.47,
@@ -259,6 +264,14 @@ class ElectrodeBlended(Electrode):
     particle: Dict[str, Particle] = Field(alias="Particle")
 
 
+class ElectrodeSingleSPM(ContactBase, Particle):
+    pass
+
+
+class ElectrodeBlendedSPM(ContactBase):
+    particle: Dict[str, Particle] = Field(alias="Particle")
+
+
 class Experiment(ExtraBaseModel):
     time: List[float] = Field(
         alias="Time [s]",
@@ -301,9 +314,36 @@ class Parameterisation(ExtraBaseModel):
     )
 
 
+class ParameterisationSPM(ExtraBaseModel):
+    cell: Cell = Field(
+        alias="Cell",
+    )
+    negative_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Negative electrode",
+    )
+    positive_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Positive electrode",
+    )
+
+
 class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: Parameterisation = Field(alias="Parameterisation")
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+        alias="Parameterisation"
+    )
     validation: Dict[str, Experiment] = Field(None, alias="Validation")
+
+    @root_validator(skip_on_failure=True)
+    def model_based_validation(cls, values):
+        model = values.get("header").model
+        parameter_class_name = values.get("parameterisation").__class__.__name__
+        allowed_combinations = [
+            ("Parameterisation", "DFN"),
+            ("Parameterisation", "SPMe"),
+            ("ParameterisationSPM", "SPM"),
+        ]
+        if (parameter_class_name, model) not in allowed_combinations:
+            warn(f"The model type {model} does not correspond to the parameter set")
+        return values
