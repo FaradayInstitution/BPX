@@ -54,23 +54,32 @@ class TestSchema(unittest.TestCase):
                     "Maximum stoichiometry": 0.75668,
                 },
                 "Positive electrode": {
-                    "Particle radius [m]": 5.22e-6,
                     "Thickness [m]": 75.6e-6,
-                    "Diffusivity [m2.s-1]": 4.0e-15,
-                    "OCP [V]": (
-                        "-3.04420906 * x + 10.04892207 - "
-                        "0.65637536 * tanh(-4.02134095 * (x - 0.80063948)) + "
-                        "4.24678547 * tanh(12.17805062 * (x - 7.57659337)) - "
-                        "0.3757068 * tanh(59.33067782 * (x - 0.99784492))"
-                    ),
                     "Conductivity [S.m-1]": 0.18,
-                    "Surface area per unit volume [m-1]": 382184,
                     "Porosity": 0.335,
                     "Transport efficiency": 0.1939,
-                    "Reaction rate constant [mol.m-2.s-1]": 1e-10,
-                    "Maximum concentration [mol.m-3]": 63104.0,
-                    "Minimum stoichiometry": 0.42424,
-                    "Maximum stoichiometry": 0.96210,
+                    "Particle": {
+                        "Primary": {
+                            "Particle radius [m]": 5.22e-6,
+                            "Diffusivity [m2.s-1]": 4.0e-15,
+                            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                            "Surface area per unit volume [m-1]": 382184,
+                            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                            "Maximum concentration [mol.m-3]": 63104.0,
+                            "Minimum stoichiometry": 0.1,
+                            "Maximum stoichiometry": 0.9,
+                        },
+                        "Secondary": {
+                            "Particle radius [m]": 10.0e-6,
+                            "Diffusivity [m2.s-1]": 4.0e-15,
+                            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                            "Surface area per unit volume [m-1]": 382184,
+                            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                            "Maximum concentration [mol.m-3]": 63104.0,
+                            "Minimum stoichiometry": 0.1,
+                            "Maximum stoichiometry": 0.9,
+                        },
+                    },
                 },
                 "Separator": {
                     "Thickness [m]": 1.2e-5,
@@ -80,9 +89,109 @@ class TestSchema(unittest.TestCase):
             },
         }
 
+        # SPM parameter set
+        self.base_spm = {
+            "Header": {
+                "BPX": 1.0,
+                "Model": "SPM",
+            },
+            "Parameterisation": {
+                "Cell": {
+                    "Ambient temperature [K]": 299.0,
+                    "Initial temperature [K]": 299.0,
+                    "Reference temperature [K]": 299.0,
+                    "Electrode area [m2]": 2.0,
+                    "External surface area [m2]": 2.2,
+                    "Volume [m3]": 1.0,
+                    "Number of electrode pairs connected in parallel to make a cell": 1,
+                    "Nominal cell capacity [A.h]": 5.0,
+                    "Lower voltage cut-off [V]": 2.0,
+                    "Upper voltage cut-off [V]": 4.0,
+                },
+                "Negative electrode": {
+                    "Particle radius [m]": 5.86e-6,
+                    "Thickness [m]": 85.2e-6,
+                    "Diffusivity [m2.s-1]": 3.3e-14,
+                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                    "Surface area per unit volume [m-1]": 383959,
+                    "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                    "Maximum concentration [mol.m-3]": 33133,
+                    "Minimum stoichiometry": 0.01,
+                    "Maximum stoichiometry": 0.99,
+                },
+                "Positive electrode": {
+                    "Thickness [m]": 75.6e-6,
+                    "Particle": {
+                        "Primary": {
+                            "Particle radius [m]": 5.22e-6,
+                            "Diffusivity [m2.s-1]": 4.0e-15,
+                            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                            "Surface area per unit volume [m-1]": 382184,
+                            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                            "Maximum concentration [mol.m-3]": 63104.0,
+                            "Minimum stoichiometry": 0.1,
+                            "Maximum stoichiometry": 0.9,
+                        },
+                        "Secondary": {
+                            "Particle radius [m]": 10.0e-6,
+                            "Diffusivity [m2.s-1]": 4.0e-15,
+                            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                            "Surface area per unit volume [m-1]": 382184,
+                            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                            "Maximum concentration [mol.m-3]": 63104.0,
+                            "Minimum stoichiometry": 0.1,
+                            "Maximum stoichiometry": 0.9,
+                        },
+                    },
+                },
+            },
+        }
+
     def test_simple(self):
         test = copy.copy(self.base)
         parse_obj_as(BPX, test)
+
+    def test_simple_spme(self):
+        test = copy.copy(self.base)
+        test["Header"]["Model"] = "SPMe"
+        parse_obj_as(BPX, test)
+
+    def test_simple_spm(self):
+        test = copy.copy(self.base_spm)
+        parse_obj_as(BPX, test)
+
+    def test_bad_model(self):
+        test = copy.copy(self.base)
+        test["Header"]["Model"] = "Wrong model type"
+        with self.assertRaises(ValidationError):
+            parse_obj_as(BPX, test)
+
+    def test_bad_dfn(self):
+        test = copy.copy(self.base_spm)
+        test["Header"]["Model"] = "DFN"
+        with self.assertWarnsRegex(
+            UserWarning,
+            "The model type DFN does not correspond to the parameter set",
+        ):
+            parse_obj_as(BPX, test)
+
+    def test_bad_spme(self):
+        test = copy.copy(self.base_spm)
+        test["Header"]["Model"] = "SPMe"
+        with self.assertWarnsRegex(
+            UserWarning,
+            "The model type SPMe does not correspond to the parameter set",
+        ):
+            parse_obj_as(BPX, test)
+
+    def test_bad_spm(self):
+        test = copy.copy(self.base)
+        test["Header"]["Model"] = "SPM"
+        with self.assertWarnsRegex(
+            UserWarning,
+            "The model type SPM does not correspond to the parameter set",
+        ):
+            parse_obj_as(BPX, test)
 
     def test_table(self):
         test = copy.copy(self.base)
