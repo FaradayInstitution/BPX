@@ -86,8 +86,8 @@ class TestUtlilities(unittest.TestCase):
     def test_get_init_sto_negative_target_soc(self):
         test = copy.copy(self.base)
         obj = parse_obj_as(BPX, test)
-        with self.assertRaisesRegex(
-            ValueError,
+        with self.assertWarnsRegex(
+            UserWarning,
             "Target SOC should be between 0 and 1",
         ):
             get_electrode_stoichiometries(-0.1, obj)
@@ -95,8 +95,8 @@ class TestUtlilities(unittest.TestCase):
     def test_get_init_sto_bad_target_soc(self):
         test = copy.copy(self.base)
         obj = parse_obj_as(BPX, test)
-        with self.assertRaisesRegex(
-            ValueError,
+        with self.assertWarnsRegex(
+            UserWarning,
             "Target SOC should be between 0 and 1",
         ):
             get_electrode_stoichiometries(1.1, obj)
@@ -104,8 +104,8 @@ class TestUtlilities(unittest.TestCase):
     def test_get_init_conc_negative_target_soc(self):
         test = copy.copy(self.base)
         obj = parse_obj_as(BPX, test)
-        with self.assertRaisesRegex(
-            ValueError,
+        with self.assertWarnsRegex(
+            UserWarning,
             "Target SOC should be between 0 and 1",
         ):
             get_electrode_concentrations(-0.5, obj)
@@ -113,8 +113,8 @@ class TestUtlilities(unittest.TestCase):
     def test_get_init_conc_bad_target_soc(self):
         test = copy.copy(self.base)
         obj = parse_obj_as(BPX, test)
-        with self.assertRaisesRegex(
-            ValueError,
+        with self.assertWarnsRegex(
+            UserWarning,
             "Target SOC should be between 0 and 1",
         ):
             get_electrode_concentrations(1.05, obj)

@@ -23,7 +23,7 @@ class TestSchema(unittest.TestCase):
                     "Number of electrode pairs connected in parallel to make a cell": 1,
                     "Nominal cell capacity [A.h]": 5.0,
                     "Lower voltage cut-off [V]": 2.0,
-                    "Upper voltage cut-off [V]": 4.5,
+                    "Upper voltage cut-off [V]": 4.0,
                 },
                 "Electrolyte": {
                     "Initial concentration [mol.m-3]": 1000,
@@ -37,21 +37,15 @@ class TestSchema(unittest.TestCase):
                     "Particle radius [m]": 5.86e-6,
                     "Thickness [m]": 85.2e-6,
                     "Diffusivity [m2.s-1]": 3.3e-14,
-                    "OCP [V]": (
-                        "9.47057878e-01 * exp(-1.59418743e+02  * x) - 3.50928033e+04 + "
-                        "1.64230269e-01 * tanh(-4.55509094e+01 * (x - 3.24116012e-02 )) + "
-                        "3.69968491e-02 * tanh(-1.96718868e+01 * (x - 1.68334476e-01)) + "
-                        "1.91517003e+04 * tanh(3.19648312e+00 * (x - 1.85139824e+00)) + "
-                        "5.42448511e+04 * tanh(-3.19009848e+00 * (x - 2.01660395e+00))"
-                    ),
+                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
                     "Conductivity [S.m-1]": 215.0,
                     "Surface area per unit volume [m-1]": 383959,
                     "Porosity": 0.25,
                     "Transport efficiency": 0.125,
                     "Reaction rate constant [mol.m-2.s-1]": 1e-10,
                     "Maximum concentration [mol.m-3]": 33133,
-                    "Minimum stoichiometry": 0.005504,
-                    "Maximum stoichiometry": 0.75668,
+                    "Minimum stoichiometry": 0.01,
+                    "Maximum stoichiometry": 0.99,
                 },
                 "Positive electrode": {
                     "Thickness [m]": 75.6e-6,
