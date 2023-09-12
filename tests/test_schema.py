@@ -315,6 +315,7 @@ class TestSchema(unittest.TestCase):
         }
 
     def test_check_sto_limits_validator(self):
+        warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
