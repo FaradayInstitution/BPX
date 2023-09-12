@@ -23,20 +23,25 @@ def check_sto_limits(cls, values):
     V_min = values.get("cell").lower_voltage_cutoff
     V_max = values.get("cell").upper_voltage_cutoff
 
+    # Voltage tolerance from `settings` data class
+    tol = cls.settings.v_tol
+
     # Checks the maximum voltage estimated from STO
     V_max_sto = ocp_p(sto_p_min) - ocp_n(sto_n_max)
-    if V_max_sto > V_max:
+    if V_max_sto - V_max > tol:
         warn(
             f"The maximum voltage computed from the STO limits ({V_max_sto} V) "
-            f"is higher than the upper voltage cut-off ({V_max} V)"
+            f"is higher than the upper voltage cut-off ({V_max} V) "
+            f"with the absolute tolerance v_tol = {tol} V"
         )
 
     # Checks the minimum voltage estimated from STO
     V_min_sto = ocp_p(sto_p_max) - ocp_n(sto_n_min)
-    if V_min_sto < V_min:
+    if V_min_sto - V_min < -tol:
         warn(
             f"The minimum voltage computed from the STO limits ({V_min_sto} V) "
-            f"is less than the lower voltage cut-off ({V_min} V)"
+            f"is less than the lower voltage cut-off ({V_min} V) "
+            f"with the absolute tolerance v_tol = {tol} V"
         )
 
     return values

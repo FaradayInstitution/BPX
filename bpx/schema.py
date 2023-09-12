@@ -1,5 +1,7 @@
 from typing import List, Literal, Union, Dict
 
+from dataclasses import dataclass
+
 from pydantic import BaseModel, Field, Extra, root_validator
 
 from bpx import Function, InterpolatedTable, check_sto_limits
@@ -12,6 +14,14 @@ FloatFunctionTable = Union[float, Function, InterpolatedTable]
 class ExtraBaseModel(BaseModel):
     class Config:
         extra = Extra.forbid
+
+    @dataclass
+    class settings:
+        v_tol: float = 0.001  # Absolute tolerance in [V] to validate the voltage limits
+
+    def parse_file(self, filename, v_tol):
+        self.settings.v_tol = v_tol
+        return super().parse_file(filename)
 
 
 class Header(ExtraBaseModel):
