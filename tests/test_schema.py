@@ -270,10 +270,26 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(obj.parameterisation.user_defined.b, 2)
         self.assertEqual(obj.parameterisation.user_defined.c, 3)
 
-    def test_bad_user_defined(self):
+    def test_user_defined_table(self):
         test = copy.copy(self.base)
         test["Parameterisation"]["User-defined"] = {
-            "bad": "strings aren't allowed",
+            "a": {
+                "x": [1.0, 2.0],
+                "y": [2.3, 4.5],
+            },
+        }
+        parse_obj_as(BPX, test)
+
+    def test_user_defined_function(self):
+        test = copy.copy(self.base)
+        test["Parameterisation"]["User-defined"] = {"a": "2.0 * x"}
+        parse_obj_as(BPX, test)
+
+    def test_bad_user_defined(self):
+        test = copy.copy(self.base)
+        # bool not allowed type
+        test["Parameterisation"]["User-defined"] = {
+            "bad": True,
         }
         with self.assertRaises(ValidationError):
             parse_obj_as(BPX, test)

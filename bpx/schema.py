@@ -1,4 +1,4 @@
-from typing import List, Literal, Union, Dict, get_args
+from typing import List, Literal, Union, Dict
 from pydantic import BaseModel, Field, Extra, root_validator
 from bpx import Function, InterpolatedTable
 from warnings import warn
@@ -273,10 +273,22 @@ class UserDefined(BaseModel):
     class Config:
         extra = Extra.allow
 
+    def __init__(Self, **data):
+        """
+        Overwrite the default __init__ to convert strings to Function objects and
+        dicts to InterpolatedTable objects
+        """
+        for k, v in data.items():
+            if isinstance(v, str):
+                data[k] = Function(v)
+            elif isinstance(v, dict):
+                data[k] = InterpolatedTable(**v)
+        super().__init__(**data)
+
     @root_validator(pre=True)
     def validate_extra_fields(cls, values):
         for k, v in values.items():
-            if not isinstance(v, get_args(FloatFunctionTable)):
+            if not isinstance(v, (float, Function, InterpolatedTable)):
                 raise TypeError(f"{k} must be of type 'FloatFunctionTable'")
         return values
 
