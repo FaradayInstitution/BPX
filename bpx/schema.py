@@ -1,10 +1,9 @@
 from typing import List, Literal, Union, Dict, get_args
-
 from pydantic import BaseModel, Field, Extra, root_validator
-
 from bpx import Function, InterpolatedTable
+from warnings import warn
 
-FloatFunctionTable = Union[int, float, Function, InterpolatedTable]
+FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
 
 class ExtraBaseModel(BaseModel):
@@ -158,12 +157,15 @@ class Electrolyte(ExtraBaseModel):
     )
 
 
-class Contact(ExtraBaseModel):
+class ContactBase(ExtraBaseModel):
     thickness: float = Field(
         alias="Thickness [m]",
         example=85.2e-6,
         description="Contact thickness",
     )
+
+
+class Contact(ContactBase):
     porosity: float = Field(
         alias="Porosity",
         example=0.47,
@@ -176,7 +178,7 @@ class Contact(ExtraBaseModel):
     )
 
 
-class Electrode(Contact):
+class Particle(ExtraBaseModel):
     minimum_stoichiometry: float = Field(
         alias="Minimum stoichiometry",
         example=0.1,
@@ -216,11 +218,6 @@ class Electrode(Contact):
         example=17800,
         description="Activation energy for diffusivity in particles",
     )
-    conductivity: float = Field(
-        alias="Conductivity [S.m-1]",
-        example=0.18,
-        description=("Electrolyte conductivity (constant)"),
-    )
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
@@ -246,6 +243,30 @@ class Electrode(Contact):
         example=27010,
         description="Activation energy of reaction rate constant in particles",
     )
+
+
+class Electrode(Contact):
+    conductivity: float = Field(
+        alias="Conductivity [S.m-1]",
+        example=0.18,
+        description=("Electrolyte conductivity (constant)"),
+    )
+
+
+class ElectrodeSingle(Electrode, Particle):
+    pass
+
+
+class ElectrodeBlended(Electrode):
+    particle: Dict[str, Particle] = Field(alias="Particle")
+
+
+class ElectrodeSingleSPM(ContactBase, Particle):
+    pass
+
+
+class ElectrodeBlendedSPM(ContactBase):
+    particle: Dict[str, Particle] = Field(alias="Particle")
 
 
 class UserDefined(BaseModel):
@@ -291,10 +312,10 @@ class Parameterisation(ExtraBaseModel):
     electrolyte: Electrolyte = Field(
         alias="Electrolyte",
     )
-    negative_electrode: Electrode = Field(
+    negative_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Negative electrode",
     )
-    positive_electrode: Electrode = Field(
+    positive_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Positive electrode",
     )
     separator: Contact = Field(
@@ -302,7 +323,23 @@ class Parameterisation(ExtraBaseModel):
     )
     user_defined: UserDefined = Field(
         None,
-        alias="User defined",
+        alias="User-defined",
+    )
+
+
+class ParameterisationSPM(ExtraBaseModel):
+    cell: Cell = Field(
+        alias="Cell",
+    )
+    negative_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Negative electrode",
+    )
+    positive_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Positive electrode",
+    )
+    user_defined: UserDefined = Field(
+        None,
+        alias="User-defined",
     )
 
 
@@ -310,5 +347,20 @@ class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: Parameterisation = Field(alias="Parameterisation")
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+        alias="Parameterisation"
+    )
     validation: Dict[str, Experiment] = Field(None, alias="Validation")
+
+    @root_validator(skip_on_failure=True)
+    def model_based_validation(cls, values):
+        model = values.get("header").model
+        parameter_class_name = values.get("parameterisation").__class__.__name__
+        allowed_combinations = [
+            ("Parameterisation", "DFN"),
+            ("Parameterisation", "SPMe"),
+            ("ParameterisationSPM", "SPM"),
+        ]
+        if (parameter_class_name, model) not in allowed_combinations:
+            warn(f"The model type {model} does not correspond to the parameter set")
+        return values
