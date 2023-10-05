@@ -273,7 +273,7 @@ class UserDefined(BaseModel):
     class Config:
         extra = Extra.allow
 
-    def __init__(Self, **data):
+    def __init__(self, **data):
         """
         Overwrite the default __init__ to convert strings to Function objects and
         dicts to InterpolatedTable objects
