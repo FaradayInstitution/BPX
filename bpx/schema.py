@@ -1,8 +1,10 @@
 from typing import List, Literal, Union, Dict
 
-from pydantic import BaseModel, Field, Extra
+from pydantic import BaseModel, Field, Extra, root_validator
 
 from bpx import Function, InterpolatedTable
+
+from warnings import warn
 
 FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
@@ -176,7 +178,7 @@ class Electrolyte(ExtraBaseModel):
     )
 
 
-class Contact(ExtraBaseModel):
+class ContactBase(ExtraBaseModel):
     """
     Base class for parameters that are common to electrode and separator components.
     """
@@ -186,6 +188,13 @@ class Contact(ExtraBaseModel):
         example=85.2e-6,
         description="Contact thickness",
     )
+
+
+class Contact(ContactBase):
+    """
+    Class for parameters that are common to electrode and separator components.
+    """
+
     porosity: float = Field(
         alias="Porosity",
         example=0.47,
@@ -198,9 +207,9 @@ class Contact(ExtraBaseModel):
     )
 
 
-class Electrode(Contact):
+class Particle(ExtraBaseModel):
     """
-    Electrode parameters.
+    Class for particle parameters.
     """
 
     minimum_stoichiometry: float = Field(
@@ -242,11 +251,6 @@ class Electrode(Contact):
         example=17800,
         description="Activation energy for diffusivity in particles",
     )
-    conductivity: float = Field(
-        alias="Conductivity [S.m-1]",
-        example=0.18,
-        description=("Electrolyte conductivity (constant)"),
-    )
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         example={"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
@@ -272,6 +276,52 @@ class Electrode(Contact):
         example=27010,
         description="Activation energy of reaction rate constant in particles",
     )
+
+
+class Electrode(Contact):
+    """
+    Class for electrode parameters.
+    """
+
+    conductivity: float = Field(
+        alias="Conductivity [S.m-1]",
+        example=0.18,
+        description=("Electrolyte conductivity (constant)"),
+    )
+
+
+class ElectrodeSingle(Electrode, Particle):
+    """
+    Class for electrode composed of a single active material.
+    """
+
+    pass
+
+
+class ElectrodeBlended(Electrode):
+    """
+    Class for electrode composed of a blend of active materials.
+    """
+
+    particle: Dict[str, Particle] = Field(alias="Particle")
+
+
+class ElectrodeSingleSPM(ContactBase, Particle):
+    """
+    Class for electrode composed of a single active material, for use with Single
+    Particle type models.
+    """
+
+    pass
+
+
+class ElectrodeBlendedSPM(ContactBase):
+    """
+    Class for electrode composed of a blend of active materials, for use with Single
+    Particle type models.
+    """
+
+    particle: Dict[str, Particle] = Field(alias="Particle")
 
 
 class Experiment(ExtraBaseModel):
@@ -314,14 +364,32 @@ class Parameterisation(ExtraBaseModel):
     electrolyte: Electrolyte = Field(
         alias="Electrolyte",
     )
-    negative_electrode: Electrode = Field(
+    negative_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Negative electrode",
     )
-    positive_electrode: Electrode = Field(
+    positive_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Positive electrode",
     )
     separator: Contact = Field(
         alias="Separator",
+    )
+
+
+class ParameterisationSPM(ExtraBaseModel):
+    """
+    A class to store parameterisation data for a cell. Consists of parameters for the
+    cell, electrolyte, negative electrode, and positive electrode. This class stores the
+    parameters needed for Single Particle type models.
+    """
+
+    cell: Cell = Field(
+        alias="Cell",
+    )
+    negative_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Negative electrode",
+    )
+    positive_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Positive electrode",
     )
 
 
@@ -334,5 +402,20 @@ class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: Parameterisation = Field(alias="Parameterisation")
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+        alias="Parameterisation"
+    )
     validation: Dict[str, Experiment] = Field(None, alias="Validation")
+
+    @root_validator(skip_on_failure=True)
+    def model_based_validation(cls, values):
+        model = values.get("header").model
+        parameter_class_name = values.get("parameterisation").__class__.__name__
+        allowed_combinations = [
+            ("Parameterisation", "DFN"),
+            ("Parameterisation", "SPMe"),
+            ("ParameterisationSPM", "SPM"),
+        ]
+        if (parameter_class_name, model) not in allowed_combinations:
+            warn(f"The model type {model} does not correspond to the parameter set")
+        return values
