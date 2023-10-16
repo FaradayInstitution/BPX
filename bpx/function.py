@@ -46,8 +46,8 @@ class Function(str):
 
         Parameters
         ----------
-            preamble: ste, options
-                a string of python code to be prepended to the function
+            preamble: str, optional
+                A string of python code to be prepended to the function
                 definition. This can be used to import modules or define
                 helper functions.
         """
