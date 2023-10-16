@@ -111,7 +111,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/pybamm-team/bpx",
+            "url": "https://github.com/FaradayInstitution/BPX",
             "icon": "fa-brands fa-square-github",
         },
         {
@@ -124,7 +124,7 @@ html_theme_options = {
     "external_links": [
         {
             "name": "Contributing",
-            "url": "https://github.com/pybamm-team/bpx/tree/develop/CONTRIBUTING.md",
+            "url": "https://github.com/FaradayInstitution/BPX/tree/develop/CONTRIBUTING.md",
         },
     ],
     "footer_start": [
@@ -152,8 +152,8 @@ html_sidebars = {"**": ["sidebar-nav-bs.html"]}
 
 # For edit button
 html_context = {
-    "github_user": "pybamm-team",
-    "github_repo": "bpx",
+    "github_user": "FaradayInstitution",
+    "github_repo": "BPX",
     "github_version": "main",
     "doc_path": "docs/",
 }

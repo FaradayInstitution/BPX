@@ -17,8 +17,8 @@ BPX documentation
 **Useful links**:
 `Project Home Page <https://bpxstandard.com/>`_ |
 `Installation <source/user_guide/installation.html>`_ |
-`Source Repository <https://github.com/pybamm-team/bpx>`_ |
-`Issue Tracker <https://github.com/pybamm-team/bpx/issues>`_ |
-`Discussions <https://github.com/pybamm-team/bpx/discussions>`_
+`Source Repository <https://github.com/FaradayInstitution/BPX>`_ |
+`Issue Tracker <https://github.com/FaradayInstitution/BPX/issues>`_ |
+`Discussions <https://github.com/FaradayInstitution/BPX/discussions>`_
 
 BPX, an outcome of the Faraday Institution Multi-scale Modelling project, is an open standard for physics-based Li-ion battery models that has been developed to reduce costs and time-to-market through a common definition of physics-based battery models that can be used widely across industry. 
