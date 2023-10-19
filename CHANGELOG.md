@@ -5,6 +5,7 @@
 - Added validation of the STO limits subbed into the OCPs vs the upper/lower cut-off voltage limits for non-blended electrodes with the OCPs defined as functions ([#32](https://github.com/FaradayInstitution/BPX/pull/32)). The user can provide a tolerance by updating the settings variable `BPX.settings.v_tol` or by passing extra option `v_tol` to `parse_bpx_file()` function. Default value of the tolerance is 1 mV. The tolerance cannot be negative.
 - Added the target SOC check in `get_electrode_concentrations()` function. Raise a warning if the SOC is outside of [0,1] interval.
 - In `get_electrode_stoichiometries()` function, raise a warning instead of an error if the SOC is outside of [0,1] interval.
+- Added five parametrisation examples (two DFN parametrisation examples from About:Energy open-source release, blended electrode definition, user-defined 0th-order hysteresis, and SPM parametrisation).
 
 # [v0.3.1](https://github.com/pybamm-team/BPX/releases/tag/v0.3.1)
 
