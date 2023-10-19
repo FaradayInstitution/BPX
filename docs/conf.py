@@ -26,8 +26,8 @@ sys.path.append(os.path.abspath("./sphinxext/"))
 # -- Project information -----------------------------------------------------
 
 project = "BPX"
-copyright = "2022, University of Oxford"
-author = "Martin Robinson"
+copyright = "2022-2023, University of Oxford"
+author = "Edmund Dickinson, Ivan Korotkin, Martin Robinson, Robert Timms"
 
 # The short X.Y version
 version = bpx.__version__

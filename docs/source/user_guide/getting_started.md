@@ -1,10 +1,6 @@
 # Getting Started
 
-To get started, first install the `BPX` module using pip
-```bash
-pip install bpx
-```
-For more detailed installation instructions, see [](installation).
+To get started, first install the `BPX` following the instructions given in [](installation).
 
 To create a BPX object from a JSON file, you can use the `parse_bpx_file` function
 ```python
