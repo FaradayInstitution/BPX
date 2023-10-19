@@ -7,7 +7,7 @@ from bpx import BPX, parse_bpx_file, parse_bpx_obj, parse_bpx_str
 
 class TestParsers(unittest.TestCase):
     def setUp(self):
-        self.base = """
+        base = """
             {
                 "Header": {
                         "BPX": 0.1,
@@ -42,8 +42,14 @@ class TestParsers(unittest.TestCase):
                             "Particle radius [m]": 4.12e-06,
                             "Thickness [m]": 5.62e-05,
                             "Diffusivity [m2.s-1]": 2.728e-14,
-                            "OCP [V]": "9.47057878e-01 * exp(-1.59418743e+02  * x) - 3.50928033e+04 + 1.64230269e-01 * tanh(-4.55509094e+01 * (x - 3.24116012e-02 )) + 3.69968491e-02 * tanh(-1.96718868e+01 * (x - 1.68334476e-01)) + 1.91517003e+04 * tanh(3.19648312e+00 * (x - 1.85139824e+00)) + 5.42448511e+04 * tanh(-3.19009848e+00 * (x - 2.01660395e+00))",
-                            "Entropic change coefficient [V.K-1]": "(-0.1112 * x + 0.02914 + 0.3561 * exp(-((x - 0.08309) ** 2) / 0.004616)) / 1000",
+                            "OCP [V]":
+                                "9.47057878e-01 * exp(-1.59418743e+02  * x) - 3.50928033e+04 +
+                                1.64230269e-01 * tanh(-4.55509094e+01 * (x - 3.24116012e-02 )) +
+                                3.69968491e-02 * tanh(-1.96718868e+01 * (x - 1.68334476e-01)) +
+                                1.91517003e+04 * tanh(3.19648312e+00 * (x - 1.85139824e+00)) +
+                                5.42448511e+04 * tanh(-3.19009848e+00 * (x - 2.01660395e+00))",
+                            "Entropic change coefficient [V.K-1]":
+                                "(-0.1112 * x + 0.02914 + 0.3561 * exp(-((x - 0.08309) ** 2) / 0.004616)) / 1000",
                             "Conductivity [S.m-1]": 0.222,
                             "Surface area per unit volume [m-1]": 499522,
                             "Porosity": 0.253991,
@@ -59,7 +65,9 @@ class TestParsers(unittest.TestCase):
                             "Particle radius [m]": 4.6e-06,
                             "Thickness [m]": 5.23e-05,
                             "Diffusivity [m2.s-1]": 3.2e-14,
-                            "OCP [V]": "-3.04420906 * x + 10.04892207 - 0.65637536 * tanh(-4.02134095 * (x - 0.80063948)) + 4.24678547 * tanh(12.17805062 * (x - 7.57659337)) - 0.3757068 * tanh(59.33067782 * (x - 0.99784492))",
+                            "OCP [V]":
+                                "-3.04420906 * x + 10.04892207 - 0.65637536 * tanh(-4.02134095 * (x - 0.80063948)) +
+                                4.24678547 * tanh(12.17805062 * (x - 7.57659337)) - 0.3757068 * tanh(59.33067782 * (x - 0.99784492))",
                             "Entropic change coefficient [V.K-1]": -1e-4,
                             "Conductivity [S.m-1]": 0.789,
                             "Surface area per unit volume [m-1]": 432072,
@@ -80,6 +88,7 @@ class TestParsers(unittest.TestCase):
                 }
             }
             """
+        self.base = base.replace("\n", "")
 
     def test_negative_v_tol_file(self):
         with self.assertRaisesRegex(
