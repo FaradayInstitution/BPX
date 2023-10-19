@@ -1,9 +1,6 @@
-from typing import List, Literal, Union, Dict
-
+from typing import List, Literal, Union, Dict, get_args
 from pydantic import BaseModel, Field, Extra, root_validator
-
 from bpx import Function, InterpolatedTable
-
 from warnings import warn
 
 FloatFunctionTable = Union[float, Function, InterpolatedTable]
@@ -272,6 +269,30 @@ class ElectrodeBlendedSPM(ContactBase):
     particle: Dict[str, Particle] = Field(alias="Particle")
 
 
+class UserDefined(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    def __init__(self, **data):
+        """
+        Overwrite the default __init__ to convert strings to Function objects and
+        dicts to InterpolatedTable objects
+        """
+        for k, v in data.items():
+            if isinstance(v, str):
+                data[k] = Function(v)
+            elif isinstance(v, dict):
+                data[k] = InterpolatedTable(**v)
+        super().__init__(**data)
+
+    @root_validator(pre=True)
+    def validate_extra_fields(cls, values):
+        for k, v in values.items():
+            if not isinstance(v, get_args(FloatFunctionTable)):
+                raise TypeError(f"{k} must be of type 'FloatFunctionTable'")
+        return values
+
+
 class Experiment(ExtraBaseModel):
     time: List[float] = Field(
         alias="Time [s]",
@@ -312,6 +333,10 @@ class Parameterisation(ExtraBaseModel):
     separator: Contact = Field(
         alias="Separator",
     )
+    user_defined: UserDefined = Field(
+        None,
+        alias="User-defined",
+    )
 
 
 class ParameterisationSPM(ExtraBaseModel):
@@ -323,6 +348,10 @@ class ParameterisationSPM(ExtraBaseModel):
     )
     positive_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
         alias="Positive electrode",
+    )
+    user_defined: UserDefined = Field(
+        None,
+        alias="User-defined",
     )
 
 
