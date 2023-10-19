@@ -32,7 +32,7 @@ class Header(ExtraBaseModel):
     references: str = Field(
         None,
         alias="References",
-        descrciption=("May contain any references"),
+        description=("May contain any references"),
         example="Chang-Hui Chen et al 2020 J. Electrochem. Soc. 167 080534",
     )
     model: Literal["SPM", "SPMe", "DFN"] = Field(
@@ -249,7 +249,7 @@ class Electrode(Contact):
     conductivity: float = Field(
         alias="Conductivity [S.m-1]",
         example=0.18,
-        description=("Electrolyte conductivity (constant)"),
+        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
     )
 
 
