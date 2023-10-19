@@ -331,7 +331,7 @@ class TestSchema(unittest.TestCase):
         warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
-        BPX.settings.v_tol = 0.25
+        BPX.settings.tolerances["Voltage [V]"] = 0.25
         parse_obj_as(BPX, test)
 
     def test_check_sto_limits_validator_low_voltage(self):
@@ -344,7 +344,7 @@ class TestSchema(unittest.TestCase):
         warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
-        BPX.settings.v_tol = 0.35
+        BPX.settings.tolerances["Voltage [V]"] = 0.35
         parse_obj_as(BPX, test)
 
     def test_user_defined(self):

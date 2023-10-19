@@ -10,13 +10,15 @@ class ExtraBaseModel(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    # @dataclass
     class settings:
-        v_tol: float = 0.001  # Absolute tolerance in [V] to validate the voltage limits
+        """
+        Class with BPX-related settings.
+        It might be worth moving it to a separate file if it grows bigger.
+        """
 
-    def parse_file(self, filename, v_tol):
-        self.settings.v_tol = v_tol
-        return super().parse_file(filename)
+        tolerances = {
+            "Voltage [V]": 1e-3,  # Absolute tolerance in [V] to validate the voltage limits
+        }
 
 
 class Header(ExtraBaseModel):

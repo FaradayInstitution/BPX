@@ -24,7 +24,7 @@ def check_sto_limits(cls, values):
     V_max = values.get("cell").upper_voltage_cutoff
 
     # Voltage tolerance from `settings` data class
-    tol = cls.settings.v_tol
+    tol = cls.settings.tolerances["Voltage [V]"]
 
     # Checks the maximum voltage estimated from STO
     V_max_sto = ocp_p(sto_p_min) - ocp_n(sto_n_max)
