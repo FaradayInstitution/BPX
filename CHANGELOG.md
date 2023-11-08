@@ -1,4 +1,4 @@
-# v0.4.0
+# [v0.4.0](https://github.com/FaradayInstitution/BPX/releases/tag/v0.4.0)
 
 - Added five parametrisation examples (two DFN parametrisation examples from About:Energy open-source release, blended electrode definition, user-defined 0th-order hysteresis, and SPM parametrisation). ([#45](https://github.com/FaradayInstitution/BPX/pull/45))
 - Allow user-defined parameters to be added using the field ["Parameterisation"]["User-defined"] ([#44](https://github.com/pybamm-team/BPX/pull/44))
