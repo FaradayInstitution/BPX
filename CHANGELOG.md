@@ -1,7 +1,8 @@
-# Unreleased
+# v0.4.0
 
 - Added five parametrisation examples (two DFN parametrisation examples from About:Energy open-source release, blended electrode definition, user-defined 0th-order hysteresis, and SPM parametrisation). ([#45](https://github.com/FaradayInstitution/BPX/pull/45))
 - Allow user-defined parameters to be added using the field ["Parameterisation"]["User-defined"] ([#44](https://github.com/pybamm-team/BPX/pull/44))
+- Added basic API documentation ([#43](https://github.com/FaradayInstitution/BPX/pull/43))
 - Added validation based on models: SPM, SPMe, DFN ([#34](https://github.com/pybamm-team/BPX/pull/34)). A warning will be produced if the user-defined model type does not match the parameter set (e.g., if the model is `SPM`, but the full DFN model parameters are provided).
 - Added support for well-mixed, blended electrodes that contain more than one active material ([#33](https://github.com/pybamm-team/BPX/pull/33))
 - Added validation of the STO limits subbed into the OCPs vs the upper/lower cut-off voltage limits for non-blended electrodes with the OCPs defined as functions ([#32](https://github.com/FaradayInstitution/BPX/pull/32)). The user can provide a tolerance by updating the settings variable `BPX.settings.tolerances["Voltage [V]"]` or by passing extra option `v_tol` to `parse_bpx_file()`, `parse_bpx_obj()` or `parse_bpx_str()` functions. Default value of the tolerance is 1 mV. The tolerance cannot be negative.
