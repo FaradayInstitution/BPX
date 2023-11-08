@@ -1,6 +1,6 @@
 from typing import List, Literal, Union, Dict, get_args
 from pydantic import BaseModel, Field, Extra, root_validator
-from bpx import Function, InterpolatedTable
+from bpx import Function, InterpolatedTable, check_sto_limits
 from warnings import warn
 
 FloatFunctionTable = Union[float, Function, InterpolatedTable]
@@ -13,6 +13,16 @@ class ExtraBaseModel(BaseModel):
 
     class Config:
         extra = Extra.forbid
+
+    class settings:
+        """
+        Class with BPX-related settings.
+        It might be worth moving it to a separate file if it grows bigger.
+        """
+
+        tolerances = {
+            "Voltage [V]": 1e-3,  # Absolute tolerance in [V] to validate the voltage limits
+        }
 
 
 class Header(ExtraBaseModel):
@@ -41,7 +51,7 @@ class Header(ExtraBaseModel):
     references: str = Field(
         None,
         alias="References",
-        descrciption=("May contain any references"),
+        description=("May contain any references"),
         example="Chang-Hui Chen et al 2020 J. Electrochem. Soc. 167 080534",
     )
     model: Literal["SPM", "SPMe", "DFN"] = Field(
@@ -221,7 +231,7 @@ class Particle(ExtraBaseModel):
     )
     maximum_concentration: float = Field(
         alias="Maximum concentration [mol.m-3]",
-        example=631040,
+        example=63104.0,
         description="Maximum concentration of lithium ions in particles",
     )
     particle_radius: float = Field(
@@ -283,7 +293,7 @@ class Electrode(Contact):
     conductivity: float = Field(
         alias="Conductivity [S.m-1]",
         example=0.18,
-        description=("Electrolyte conductivity (constant)"),
+        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
     )
 
 
@@ -399,6 +409,11 @@ class Parameterisation(ExtraBaseModel):
         alias="User-defined",
     )
 
+    # Reusable validators
+    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
+        check_sto_limits
+    )
+
 
 class ParameterisationSPM(ExtraBaseModel):
     """
@@ -419,6 +434,11 @@ class ParameterisationSPM(ExtraBaseModel):
     user_defined: UserDefined = Field(
         None,
         alias="User-defined",
+    )
+
+    # Reusable validators
+    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
+        check_sto_limits
     )
 
 
