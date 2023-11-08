@@ -7,6 +7,10 @@ FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
 
 class ExtraBaseModel(BaseModel):
+    """
+    A base model that forbids extra fields
+    """
+
     class Config:
         extra = Extra.forbid
 
@@ -22,6 +26,11 @@ class ExtraBaseModel(BaseModel):
 
 
 class Header(ExtraBaseModel):
+    """
+    The header of a BPX file. Contains metadata about the file (e.g. BPX version,
+    title, description).
+    """
+
     bpx: float = Field(
         alias="BPX",
         example=1.0,
@@ -53,6 +62,11 @@ class Header(ExtraBaseModel):
 
 
 class Cell(ExtraBaseModel):
+    """
+    Cell-level parameters that are not specific to any individual component (electrode,
+    separator, or electrolyte).
+    """
+
     electrode_area: float = Field(
         alias="Electrode area [m2]",
         description="Electrode cross-sectional area",
@@ -128,6 +142,10 @@ class Cell(ExtraBaseModel):
 
 
 class Electrolyte(ExtraBaseModel):
+    """
+    Electrolyte parameters.
+    """
+
     initial_concentration: float = Field(
         alias="Initial concentration [mol.m-3]",
         example=1000,
@@ -168,6 +186,10 @@ class Electrolyte(ExtraBaseModel):
 
 
 class ContactBase(ExtraBaseModel):
+    """
+    Base class for parameters that are common to electrode and separator components.
+    """
+
     thickness: float = Field(
         alias="Thickness [m]",
         example=85.2e-6,
@@ -176,6 +198,10 @@ class ContactBase(ExtraBaseModel):
 
 
 class Contact(ContactBase):
+    """
+    Class for parameters that are common to electrode and separator components.
+    """
+
     porosity: float = Field(
         alias="Porosity",
         example=0.47,
@@ -189,6 +215,10 @@ class Contact(ContactBase):
 
 
 class Particle(ExtraBaseModel):
+    """
+    Class for particle parameters.
+    """
+
     minimum_stoichiometry: float = Field(
         alias="Minimum stoichiometry",
         example=0.1,
@@ -256,6 +286,10 @@ class Particle(ExtraBaseModel):
 
 
 class Electrode(Contact):
+    """
+    Class for electrode parameters.
+    """
+
     conductivity: float = Field(
         alias="Conductivity [S.m-1]",
         example=0.18,
@@ -264,18 +298,36 @@ class Electrode(Contact):
 
 
 class ElectrodeSingle(Electrode, Particle):
+    """
+    Class for electrode composed of a single active material.
+    """
+
     pass
 
 
 class ElectrodeBlended(Electrode):
+    """
+    Class for electrode composed of a blend of active materials.
+    """
+
     particle: Dict[str, Particle] = Field(alias="Particle")
 
 
 class ElectrodeSingleSPM(ContactBase, Particle):
+    """
+    Class for electrode composed of a single active material, for use with Single
+    Particle type models.
+    """
+
     pass
 
 
 class ElectrodeBlendedSPM(ContactBase):
+    """
+    Class for electrode composed of a blend of active materials, for use with Single
+    Particle type models.
+    """
+
     particle: Dict[str, Particle] = Field(alias="Particle")
 
 
@@ -304,6 +356,10 @@ class UserDefined(BaseModel):
 
 
 class Experiment(ExtraBaseModel):
+    """
+    A class to store experimental data (time, current, voltage, temperature).
+    """
+
     time: List[float] = Field(
         alias="Time [s]",
         example=[0, 0.1, 0.2, 0.3, 0.4],
@@ -328,6 +384,11 @@ class Experiment(ExtraBaseModel):
 
 
 class Parameterisation(ExtraBaseModel):
+    """
+    A class to store parameterisation data for a cell. Consists of parameters for the
+    cell, electrolyte, negative electrode, positive electrode, and separator.
+    """
+
     cell: Cell = Field(
         alias="Cell",
     )
@@ -355,6 +416,12 @@ class Parameterisation(ExtraBaseModel):
 
 
 class ParameterisationSPM(ExtraBaseModel):
+    """
+    A class to store parameterisation data for a cell. Consists of parameters for the
+    cell, electrolyte, negative electrode, and positive electrode. This class stores the
+    parameters needed for Single Particle type models.
+    """
+
     cell: Cell = Field(
         alias="Cell",
     )
@@ -376,6 +443,11 @@ class ParameterisationSPM(ExtraBaseModel):
 
 
 class BPX(ExtraBaseModel):
+    """
+    A class to store a BPX model. Consists of a header, parameterisation, and optional
+    validation data.
+    """
+
     header: Header = Field(
         alias="Header",
     )

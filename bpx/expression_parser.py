@@ -8,6 +8,11 @@ import pyparsing.common as ppc
 
 
 class ExpressionParser:
+    """
+    An expression parser for mathematical expressions. For valid expressions,
+    please see :class:`bpx.Function`.
+    """
+
     ParseException = pp.ParseException
 
     def __init__(self):
