@@ -12,7 +12,7 @@
 
 - Temporarily pin Pydantic version ([#35](https://github.com/FaradayInstitution/BPX/pull/35))
 
-# [v0.3.0](https://github.com/FaradayInstitution/BPX/releases/tag/v0.3.0)
+# [v0.3.0](https://github.com/pybamm-team/BPX/releases/tag/v0.3.0)
 
 - Added a missing factor of 2 in the definition of the interfacial current, see the Butler-Volmer equation (2a) in the associated BPX standard document. The interfacial current is now given by $j=2j_0\sinh(F\eta/2/R/T)$ instead of $j=j_0\sinh(F\eta/2/R/T)$.
 

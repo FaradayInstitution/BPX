@@ -3,6 +3,7 @@
 
 __version__ = "0.4.0"
 
+
 from .interpolated_table import InterpolatedTable
 from .expression_parser import ExpressionParser
 from .function import Function
