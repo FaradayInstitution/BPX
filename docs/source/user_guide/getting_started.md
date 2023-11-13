@@ -9,7 +9,7 @@ import bpx
 filename = 'path/to/my/file.json'
 my_params = bpx.parse_bpx_file(filename)
 ```
-`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obatin example files, see the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/) or [BPX example repository](https://github.com/FaradayInstitution/bpx-example).
+`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obatin example files, see the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/) or [BPX example repository](https://github.com/pybamm-team/bpx-example).
 
 Attributes of the class can be printed out using the standard Python dot notation, for example, you can print out the initial temperature of the cell using
 ```python
