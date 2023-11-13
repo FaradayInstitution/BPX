@@ -8,7 +8,7 @@ This repository features a Pydantic-based parser for JSON files in the BPX forma
 
 To support the new open standard, [About:Energy](https://www.aboutenergy.io/) have supplied two parameters sets for an NMC and LFP cell. The BPX files and associated examples and information can be found on the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/).
 
-To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX example repository](https://github.com/pybamm-team/bpx-example).
+To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX example repository](https://github.com/FaradayInstitution/bpx-example).
 
 ## 🚀 Installation
 The BPX package can be installed using pip
@@ -26,7 +26,7 @@ import bpx
 filename = 'path/to/my/file.json'
 my_params = bpx.parse_bpx_file(filename)
 ```
-`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obatin example files, see the `examples` folder, the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/), or the [BPX example repository](https://github.com/pybamm-team/bpx-example).
+`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obatin example files, see the `examples` folder, the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/), or the [BPX example repository](https://github.com/FaradayInstitution/bpx-example).
 
 Attributes of the class can be printed out using the standard Python dot notation, for example, you can print out the initial temperature of the cell using
 ```python
@@ -60,7 +60,7 @@ print(bpx.BPX.schema_json(indent=2))
 According to the `pydantic` docs, the generated schemas are compliant with the specifications: JSON Schema Core, JSON Schema Validation and OpenAPI.
 
 ## 📖 Documentation
-API documentation for the `bpx` package can be built locally using [Sphinx](https://www.sphinx-doc.org/en/master/). To build the documentation first [clone the repository](https://github.com/git-guides/git-clone), then run the following command:
+API documentation for the `bpx` package can be built locally using [Sphinx](https://www.sphinx-doc.org/en/master/). To build the documentation first [clone the repository](https://github.com/git-guides/git-clone), install the `bpx` package, and then run the following command:
 ```bash
 sphinx-build docs docs/_build/html  
 ```
