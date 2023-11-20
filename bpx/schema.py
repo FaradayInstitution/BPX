@@ -1,18 +1,36 @@
-from typing import List, Literal, Union, Dict
-
-from pydantic import BaseModel, Field, Extra
-
-from bpx import Function, InterpolatedTable
+from typing import List, Literal, Union, Dict, get_args
+from pydantic import BaseModel, Field, Extra, root_validator
+from bpx import Function, InterpolatedTable, check_sto_limits
+from warnings import warn
 
 FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
 
 class ExtraBaseModel(BaseModel):
+    """
+    A base model that forbids extra fields
+    """
+
     class Config:
         extra = Extra.forbid
 
+    class settings:
+        """
+        Class with BPX-related settings.
+        It might be worth moving it to a separate file if it grows bigger.
+        """
+
+        tolerances = {
+            "Voltage [V]": 1e-3,  # Absolute tolerance in [V] to validate the voltage limits
+        }
+
 
 class Header(ExtraBaseModel):
+    """
+    The header of a BPX file. Contains metadata about the file (e.g. BPX version,
+    title, description).
+    """
+
     bpx: float = Field(
         alias="BPX",
         example=1.0,
@@ -33,7 +51,7 @@ class Header(ExtraBaseModel):
     references: str = Field(
         None,
         alias="References",
-        descrciption=("May contain any references"),
+        description=("May contain any references"),
         example="Chang-Hui Chen et al 2020 J. Electrochem. Soc. 167 080534",
     )
     model: Literal["SPM", "SPMe", "DFN"] = Field(
@@ -44,6 +62,11 @@ class Header(ExtraBaseModel):
 
 
 class Cell(ExtraBaseModel):
+    """
+    Cell-level parameters that are not specific to any individual component (electrode,
+    separator, or electrolyte).
+    """
+
     electrode_area: float = Field(
         alias="Electrode area [m2]",
         description="Electrode cross-sectional area",
@@ -119,6 +142,10 @@ class Cell(ExtraBaseModel):
 
 
 class Electrolyte(ExtraBaseModel):
+    """
+    Electrolyte parameters.
+    """
+
     initial_concentration: float = Field(
         alias="Initial concentration [mol.m-3]",
         example=1000,
@@ -158,12 +185,23 @@ class Electrolyte(ExtraBaseModel):
     )
 
 
-class Contact(ExtraBaseModel):
+class ContactBase(ExtraBaseModel):
+    """
+    Base class for parameters that are common to electrode and separator components.
+    """
+
     thickness: float = Field(
         alias="Thickness [m]",
         example=85.2e-6,
         description="Contact thickness",
     )
+
+
+class Contact(ContactBase):
+    """
+    Class for parameters that are common to electrode and separator components.
+    """
+
     porosity: float = Field(
         alias="Porosity",
         example=0.47,
@@ -176,7 +214,11 @@ class Contact(ExtraBaseModel):
     )
 
 
-class Electrode(Contact):
+class Particle(ExtraBaseModel):
+    """
+    Class for particle parameters.
+    """
+
     minimum_stoichiometry: float = Field(
         alias="Minimum stoichiometry",
         example=0.1,
@@ -189,7 +231,7 @@ class Electrode(Contact):
     )
     maximum_concentration: float = Field(
         alias="Maximum concentration [mol.m-3]",
-        example=631040,
+        example=63104.0,
         description="Maximum concentration of lithium ions in particles",
     )
     particle_radius: float = Field(
@@ -215,11 +257,6 @@ class Electrode(Contact):
         alias="Diffusivity activation energy [J.mol-1]",
         example=17800,
         description="Activation energy for diffusivity in particles",
-    )
-    conductivity: float = Field(
-        alias="Conductivity [S.m-1]",
-        example=0.18,
-        description=("Electrolyte conductivity (constant)"),
     )
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
@@ -248,7 +285,81 @@ class Electrode(Contact):
     )
 
 
+class Electrode(Contact):
+    """
+    Class for electrode parameters.
+    """
+
+    conductivity: float = Field(
+        alias="Conductivity [S.m-1]",
+        example=0.18,
+        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
+    )
+
+
+class ElectrodeSingle(Electrode, Particle):
+    """
+    Class for electrode composed of a single active material.
+    """
+
+    pass
+
+
+class ElectrodeBlended(Electrode):
+    """
+    Class for electrode composed of a blend of active materials.
+    """
+
+    particle: Dict[str, Particle] = Field(alias="Particle")
+
+
+class ElectrodeSingleSPM(ContactBase, Particle):
+    """
+    Class for electrode composed of a single active material, for use with Single
+    Particle type models.
+    """
+
+    pass
+
+
+class ElectrodeBlendedSPM(ContactBase):
+    """
+    Class for electrode composed of a blend of active materials, for use with Single
+    Particle type models.
+    """
+
+    particle: Dict[str, Particle] = Field(alias="Particle")
+
+
+class UserDefined(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    def __init__(self, **data):
+        """
+        Overwrite the default __init__ to convert strings to Function objects and
+        dicts to InterpolatedTable objects
+        """
+        for k, v in data.items():
+            if isinstance(v, str):
+                data[k] = Function(v)
+            elif isinstance(v, dict):
+                data[k] = InterpolatedTable(**v)
+        super().__init__(**data)
+
+    @root_validator(pre=True)
+    def validate_extra_fields(cls, values):
+        for k, v in values.items():
+            if not isinstance(v, get_args(FloatFunctionTable)):
+                raise TypeError(f"{k} must be of type 'FloatFunctionTable'")
+        return values
+
+
 class Experiment(ExtraBaseModel):
+    """
+    A class to store experimental data (time, current, voltage, temperature).
+    """
+
     time: List[float] = Field(
         alias="Time [s]",
         example=[0, 0.1, 0.2, 0.3, 0.4],
@@ -273,26 +384,87 @@ class Experiment(ExtraBaseModel):
 
 
 class Parameterisation(ExtraBaseModel):
+    """
+    A class to store parameterisation data for a cell. Consists of parameters for the
+    cell, electrolyte, negative electrode, positive electrode, and separator.
+    """
+
     cell: Cell = Field(
         alias="Cell",
     )
     electrolyte: Electrolyte = Field(
         alias="Electrolyte",
     )
-    negative_electrode: Electrode = Field(
+    negative_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Negative electrode",
     )
-    positive_electrode: Electrode = Field(
+    positive_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Positive electrode",
     )
     separator: Contact = Field(
         alias="Separator",
     )
+    user_defined: UserDefined = Field(
+        None,
+        alias="User-defined",
+    )
+
+    # Reusable validators
+    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
+        check_sto_limits
+    )
+
+
+class ParameterisationSPM(ExtraBaseModel):
+    """
+    A class to store parameterisation data for a cell. Consists of parameters for the
+    cell, electrolyte, negative electrode, and positive electrode. This class stores the
+    parameters needed for Single Particle type models.
+    """
+
+    cell: Cell = Field(
+        alias="Cell",
+    )
+    negative_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Negative electrode",
+    )
+    positive_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
+        alias="Positive electrode",
+    )
+    user_defined: UserDefined = Field(
+        None,
+        alias="User-defined",
+    )
+
+    # Reusable validators
+    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
+        check_sto_limits
+    )
 
 
 class BPX(ExtraBaseModel):
+    """
+    A class to store a BPX model. Consists of a header, parameterisation, and optional
+    validation data.
+    """
+
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: Parameterisation = Field(alias="Parameterisation")
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+        alias="Parameterisation"
+    )
     validation: Dict[str, Experiment] = Field(None, alias="Validation")
+
+    @root_validator(skip_on_failure=True)
+    def model_based_validation(cls, values):
+        model = values.get("header").model
+        parameter_class_name = values.get("parameterisation").__class__.__name__
+        allowed_combinations = [
+            ("Parameterisation", "DFN"),
+            ("Parameterisation", "SPMe"),
+            ("ParameterisationSPM", "SPM"),
+        ]
+        if (parameter_class_name, model) not in allowed_combinations:
+            warn(f"The model type {model} does not correspond to the parameter set")
+        return values
