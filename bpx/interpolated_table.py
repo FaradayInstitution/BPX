@@ -1,6 +1,4 @@
-from typing import List
-
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, ValidationInfo, field_validator
 
 
 class InterpolatedTable(BaseModel):
@@ -9,11 +7,13 @@ class InterpolatedTable(BaseModel):
     by two lists of floats, x and y. The function is defined by interpolation.
     """
 
-    x: List[float]
-    y: List[float]
+    x: list[float]
+    y: list[float]
 
-    @validator("y")
-    def same_length(cls, v: list, values: dict) -> list:
-        if "x" in values and len(v) != len(values["x"]):
-            raise ValueError("x & y should be same length")
+    @field_validator("y")
+    @classmethod
+    def same_length(cls, v: list, info: ValidationInfo) -> list:
+        if "x" in info.data and len(v) != len(info.data["x"]):
+            error_msg = "x & y should be same length"
+            raise ValueError(error_msg)
         return v
