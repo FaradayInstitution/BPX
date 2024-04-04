@@ -32,8 +32,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.finalfrontier.cn/blade/bpx.git"
-Repository = "https://gitlab.finalfrontier.cn/blade/bpx.git"
+Homepage = "https://github.com/FaradayInstitution/BPX"
+Repository = "https://github.com/FaradayInstitution/BPX"
 
 [project.optional-dependencies]
 # Dependencies intended for use by developers
