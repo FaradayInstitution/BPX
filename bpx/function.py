@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import tempfile
 from importlib import util
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic_core import CoreSchema, core_schema
@@ -96,6 +97,10 @@ class Function(str):
             spec = util.spec_from_file_location("tmp", tmp.name)
             module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
+
+            # Delete
+            tmp.close()
+            Path(tmp.name).unlink(missing_ok=True)
 
         # return the new function object
         return getattr(module, function_name)
