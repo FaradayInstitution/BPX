@@ -1,9 +1,10 @@
+from typing import Tuple
 from warnings import warn
 
 from bpx import BPX
 
 
-def get_electrode_stoichiometries(target_soc: float, bpx: BPX) -> tuple[float, float]:
+def get_electrode_stoichiometries(target_soc: float, bpx: BPX) -> Tuple[float, float]:
     """
     Calculate individual electrode stoichiometries at a particular target
     state of charge, given stoichiometric limits defined by bpx
@@ -37,7 +38,7 @@ def get_electrode_stoichiometries(target_soc: float, bpx: BPX) -> tuple[float, f
     return sto_n, sto_p
 
 
-def get_electrode_concentrations(target_soc: float, bpx: BPX) -> tuple[float, float]:
+def get_electrode_concentrations(target_soc: float, bpx: BPX) -> Tuple[float, float]:
     """
     Calculate individual electrode concentrations at a particular target
     state of charge, given stoichiometric limits and maximum concentrations

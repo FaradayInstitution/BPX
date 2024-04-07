@@ -1,11 +1,13 @@
-from typing import ClassVar, Literal, get_args
+from __future__ import annotations
+
+from typing import ClassVar, Dict, List, Literal, Union, get_args
 from warnings import warn
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator, root_validator
 
 from bpx import Function, InterpolatedTable
 
-FloatFunctionTable = float | Function | InterpolatedTable
+FloatFunctionTable = Union[float, Function, InterpolatedTable]
 
 
 class ExtraBaseModel(BaseModel):
@@ -298,7 +300,7 @@ class ElectrodeBlended(Electrode):
     Class for electrode composed of a blend of active materials.
     """
 
-    particle: dict[str, Particle] = Field(alias="Particle")
+    particle: Dict[str, Particle] = Field(alias="Particle")
 
 
 class ElectrodeSingleSPM(ContactBase, Particle):
@@ -314,7 +316,7 @@ class ElectrodeBlendedSPM(ContactBase):
     Particle type models.
     """
 
-    particle: dict[str, Particle] = Field(alias="Particle")
+    particle: Dict[str, Particle] = Field(alias="Particle")
 
 
 class UserDefined(BaseModel):
@@ -347,22 +349,22 @@ class Experiment(ExtraBaseModel):
     A class to store experimental data (time, current, voltage, temperature).
     """
 
-    time: list[float] = Field(
+    time: List[float] = Field(
         alias="Time [s]",
         examples=[[0, 0.1, 0.2, 0.3, 0.4]],
         description="Time in seconds (list of floats)",
     )
-    current: list[float] = Field(
+    current: List[float] = Field(
         alias="Current [A]",
         examples=[[-5, -5, -5, -5, -5]],
         description="Current vs time",
     )
-    voltage: list[float] = Field(
+    voltage: List[float] = Field(
         alias="Voltage [V]",
         examples=[[4.2, 4.1, 4.0, 3.9, 3.8]],
         description="Voltage vs time",
     )
-    temperature: list[float] = Field(
+    temperature: List[float] = Field(
         None,
         alias="Temperature [K]",
         examples=[[298, 298, 298, 298, 298]],
@@ -430,10 +432,10 @@ class Parameterisation(ExtraBaseModel):
     electrolyte: Electrolyte = Field(
         alias="Electrolyte",
     )
-    negative_electrode: ElectrodeSingle | ElectrodeBlended = Field(
+    negative_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Negative electrode",
     )
-    positive_electrode: ElectrodeSingle | ElectrodeBlended = Field(
+    positive_electrode: Union[ElectrodeSingle, ElectrodeBlended] = Field(
         alias="Positive electrode",
     )
     separator: Contact = Field(
@@ -456,10 +458,10 @@ class ParameterisationSPM(ExtraBaseModel):
     cell: Cell = Field(
         alias="Cell",
     )
-    negative_electrode: ElectrodeSingleSPM | ElectrodeBlendedSPM = Field(
+    negative_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
         alias="Negative electrode",
     )
-    positive_electrode: ElectrodeSingleSPM | ElectrodeBlendedSPM = Field(
+    positive_electrode: Union[ElectrodeSingleSPM, ElectrodeBlendedSPM] = Field(
         alias="Positive electrode",
     )
     user_defined: UserDefined = Field(
@@ -478,8 +480,8 @@ class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: ParameterisationSPM | Parameterisation = Field(alias="Parameterisation")
-    validation: dict[str, Experiment] = Field(None, alias="Validation")
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
+    validation: Dict[str, Experiment] = Field(None, alias="Validation")
 
     @root_validator(skip_on_failure=True)
     @classmethod
