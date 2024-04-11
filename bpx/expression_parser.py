@@ -15,7 +15,7 @@ class ExpressionParser:
 
     ParseException = pp.ParseException
 
-    def __init__(self):
+    def __init__(self) -> None:
         fnumber = ppc.number()
         ident = pp.Literal("x")
         fn_ident = pp.Literal("x")
@@ -31,21 +31,15 @@ class ExpressionParser:
 
         expr_list = pp.delimitedList(pp.Group(expr))
 
-        def insert_fn_argcount_tuple(t):
+        def insert_fn_argcount_tuple(t: tuple) -> None:
             fn = t.pop(0)
             num_args = len(t[0])
             t.insert(0, (fn, num_args))
 
-        fn_call = (fn_ident + lpar - pp.Group(expr_list) + rpar).setParseAction(
-            insert_fn_argcount_tuple
-        )
+        fn_call = (fn_ident + lpar - pp.Group(expr_list) + rpar).setParseAction(insert_fn_argcount_tuple)
 
         atom = (
-            addop[...]
-            + (
-                (fn_call | fnumber | ident).set_parse_action(self.push_first)
-                | pp.Group(lpar + expr + rpar)
-            )
+            addop[...] + ((fn_call | fnumber | ident).set_parse_action(self.push_first) | pp.Group(lpar + expr + rpar))
         ).set_parse_action(self.push_unary_minus)
 
         # by defining exponentiation as "atom [ ^ factor ]..." instead of "atom
@@ -59,16 +53,16 @@ class ExpressionParser:
         self.expr_stack = []
         self.parser = expr
 
-    def push_first(self, toks):
+    def push_first(self, toks: tuple) -> None:
         self.expr_stack.append(toks[0])
 
-    def push_unary_minus(self, toks):
+    def push_unary_minus(self, toks: tuple) -> None:
         for t in toks:
             if t == "-":
                 self.expr_stack.append("unary -")
             else:
                 break
 
-    def parse_string(self, model_str, parse_all=True):
+    def parse_string(self, model_str: str, *, parse_all: bool = True) -> None:
         self.expr_stack = []
         self.parser.parseString(model_str, parseAll=parse_all)

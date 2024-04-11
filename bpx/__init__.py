@@ -1,13 +1,102 @@
-"""BPX schema and parsers"""
-# flake8: noqa F401
+from .expression_parser import ExpressionParser
+from .function import Function
+from .interpolated_table import InterpolatedTable
+from .schema import BPX, check_sto_limits
+from .utilities import get_electrode_concentrations, get_electrode_stoichiometries
 
 __version__ = "0.4.0"
 
+__all__ = [
+    "BPX",
+    "ExpressionParser",
+    "Function",
+    "InterpolatedTable",
+    "check_sto_limits",
+    "get_electrode_concentrations",
+    "get_electrode_stoichiometries",
+    "parse_bpx_file",
+    "parse_bpx_obj",
+    "parse_bpx_str",
+]
 
-from .interpolated_table import InterpolatedTable
-from .expression_parser import ExpressionParser
-from .function import Function
-from .validators import check_sto_limits
-from .schema import BPX
-from .parsers import parse_bpx_str, parse_bpx_obj, parse_bpx_file
-from .utilities import get_electrode_stoichiometries, get_electrode_concentrations
+
+def parse_bpx_obj(bpx: dict, v_tol: float = 0.001) -> BPX:
+    """
+    A convenience function to parse a bpx dict into a BPX model.
+
+    Parameters
+    ----------
+    bpx: dict
+        a dict object in bpx format
+    v_tol: float
+        absolute tolerance in [V] to validate the voltage limits, 1 mV by default
+
+    Returns
+    -------
+    BPX: :class:`bpx.BPX`
+        a parsed BPX model
+    """
+    if v_tol < 0:
+        error_msg = "v_tol should not be negative"
+        raise ValueError(error_msg)
+
+    BPX.Settings.tolerances["Voltage [V]"] = v_tol
+
+    return BPX.model_validate(bpx)
+
+
+def parse_bpx_file(filename: str, v_tol: float = 0.001) -> BPX:
+    """
+    A convenience function to parse a bpx file into a BPX model.
+
+    Parameters
+    ----------
+    filename: str
+        a filepath to a bpx file
+    v_tol: float
+        absolute tolerance in [V] to validate the voltage limits, 1 mV by default
+
+    Returns
+    -------
+    BPX: :class:`bpx.BPX`
+        a parsed BPX model
+    """
+
+    from pathlib import Path
+
+    bpx = ""
+    if filename.endswith((".yml", ".yaml")):
+        import yaml
+
+        with Path(filename).open(encoding="utf-8") as f:
+            bpx = yaml.safe_load(f)
+    else:
+        import orjson as json
+
+        with Path(filename).open(encoding="utf-8") as f:
+            bpx = json.loads(f.read())
+
+    return parse_bpx_obj(bpx, v_tol)
+
+
+def parse_bpx_str(bpx: str, v_tol: float = 0.001) -> BPX:
+    """
+    A convenience function to parse a json formatted string in bpx format into a BPX
+    model.
+
+    Parameters
+    ----------
+    bpx: str
+        a json formatted string in bpx format
+    v_tol: float
+        absolute tolerance in [V] to validate the voltage limits, 1 mV by default
+
+    Returns
+    -------
+    BPX:
+        a parsed BPX model
+    """
+    import orjson as json
+
+    bpx = json.loads(bpx)
+    return parse_bpx_obj(bpx, v_tol)

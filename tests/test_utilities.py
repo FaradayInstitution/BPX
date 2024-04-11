@@ -1,12 +1,16 @@
-import unittest
 import copy
-from pydantic import parse_obj_as
+import unittest
 
-from bpx import BPX, get_electrode_stoichiometries, get_electrode_concentrations
+import pytest
+from pydantic import TypeAdapter
+
+from bpx import BPX, get_electrode_concentrations, get_electrode_stoichiometries
+
+adapter = TypeAdapter(BPX)
 
 
 class TestUtlilities(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.base = {
             "Header": {
                 "BPX": 1.0,
@@ -29,9 +33,7 @@ class TestUtlilities(unittest.TestCase):
                     "Initial concentration [mol.m-3]": 1000,
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
-                    "Diffusivity [m2.s-1]": (
-                        "8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"
-                    ),
+                    "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -69,50 +71,50 @@ class TestUtlilities(unittest.TestCase):
             },
         }
 
-    def test_get_init_sto(self):
+    def test_get_init_sto(self) -> None:
         test = copy.copy(self.base)
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
         x, y = get_electrode_stoichiometries(0.3, obj)
-        self.assertAlmostEqual(x, 0.304)
-        self.assertAlmostEqual(y, 0.66)
+        assert x == pytest.approx(0.304)
+        assert y == pytest.approx(0.66)
 
-    def test_get_init_conc(self):
+    def test_get_init_conc(self) -> None:
         test = copy.copy(self.base)
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
         x, y = get_electrode_concentrations(0.7, obj)
-        self.assertAlmostEqual(x, 23060.568)
-        self.assertAlmostEqual(y, 21455.36)
+        assert x == pytest.approx(23060.568)
+        assert y == pytest.approx(21455.36)
 
-    def test_get_init_sto_negative_target_soc(self):
+    def test_get_init_sto_negative_target_soc(self) -> None:
         test = copy.copy(self.base)
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
         with self.assertWarnsRegex(
             UserWarning,
             "Target SOC should be between 0 and 1",
         ):
             get_electrode_stoichiometries(-0.1, obj)
 
-    def test_get_init_sto_bad_target_soc(self):
+    def test_get_init_sto_bad_target_soc(self) -> None:
         test = copy.copy(self.base)
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
         with self.assertWarnsRegex(
             UserWarning,
             "Target SOC should be between 0 and 1",
         ):
             get_electrode_stoichiometries(1.1, obj)
 
-    def test_get_init_conc_negative_target_soc(self):
+    def test_get_init_conc_negative_target_soc(self) -> None:
         test = copy.copy(self.base)
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
         with self.assertWarnsRegex(
             UserWarning,
             "Target SOC should be between 0 and 1",
         ):
             get_electrode_concentrations(-0.5, obj)
 
-    def test_get_init_conc_bad_target_soc(self):
+    def test_get_init_conc_bad_target_soc(self) -> None:
         test = copy.copy(self.base)
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
         with self.assertWarnsRegex(
             UserWarning,
             "Target SOC should be between 0 and 1",

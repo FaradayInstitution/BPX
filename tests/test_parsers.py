@@ -1,12 +1,14 @@
+import copy
 import unittest
 import warnings
-import copy
 
-from bpx import BPX, parse_bpx_file, parse_bpx_obj, parse_bpx_str
+import pytest
+
+from bpx import parse_bpx_file, parse_bpx_obj, parse_bpx_str
 
 
 class TestParsers(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         base = """
             {
                 "Header": {
@@ -33,7 +35,8 @@ class TestParsers(unittest.TestCase):
                         "Electrolyte": {
                             "Initial concentration [mol.m-3]": 1000,
                             "Cation transference number": 0.2594,
-                            "Conductivity [S.m-1]": "0.1297 * (x / 1000) ** 3 - 2.51 * (x / 1000) ** 1.5 + 3.329 * (x / 1000)",
+                            "Conductivity [S.m-1]":
+                                "0.1297 * (x / 1000) ** 3 - 2.51 * (x / 1000) ** 1.5 + 3.329 * (x / 1000)",
                             "Diffusivity [m2.s-1]": "8.794e-11 * (x / 1000) ** 2 - 3.972e-10 * (x / 1000) + 4.862e-10",
                             "Conductivity activation energy [J.mol-1]": 17100,
                             "Diffusivity activation energy [J.mol-1]": 17100
@@ -66,8 +69,10 @@ class TestParsers(unittest.TestCase):
                             "Thickness [m]": 5.23e-05,
                             "Diffusivity [m2.s-1]": 3.2e-14,
                             "OCP [V]":
-                                "-3.04420906 * x + 10.04892207 - 0.65637536 * tanh(-4.02134095 * (x - 0.80063948)) +
-                                4.24678547 * tanh(12.17805062 * (x - 7.57659337)) - 0.3757068 * tanh(59.33067782 * (x - 0.99784492))",
+                                "-3.04420906 * x + 10.04892207 -
+                                0.65637536 * tanh(-4.02134095 * (x - 0.80063948)) +
+                                4.24678547 * tanh(12.17805062 * (x - 7.57659337)) -
+                                0.3757068 * tanh(59.33067782 * (x - 0.99784492))",
                             "Entropic change coefficient [V.K-1]": -1e-4,
                             "Conductivity [S.m-1]": 0.789,
                             "Surface area per unit volume [m-1]": 432072,
@@ -90,34 +95,39 @@ class TestParsers(unittest.TestCase):
             """
         self.base = base.replace("\n", "")
 
-    def test_negative_v_tol_file(self):
-        with self.assertRaisesRegex(
-            ValueError,
-            "v_tol should not be negative",
-        ):
-            parse_bpx_file("filename", v_tol=-0.001)
+    @pytest.fixture(autouse=True)
+    def _temp_bpx_file(self, tmp_path: str, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        tmp_path.joinpath("test.json").write_text("{}")
 
-    def test_negative_v_tol_object(self):
-        bpx_obj = {"BPX": 1.0}
-        with self.assertRaisesRegex(
+    def test_negative_v_tol_file(self) -> None:
+        with pytest.raises(
             ValueError,
-            "v_tol should not be negative",
+            match="v_tol should not be negative",
+        ):
+            parse_bpx_file("test.json", v_tol=-0.001)
+
+    def test_negative_v_tol_object(self) -> None:
+        bpx_obj = {"BPX": 1.0}
+        with pytest.raises(
+            ValueError,
+            match="v_tol should not be negative",
         ):
             parse_bpx_obj(bpx_obj, v_tol=-0.001)
 
-    def test_negative_v_tol_string(self):
-        with self.assertRaisesRegex(
+    def test_negative_v_tol_string(self) -> None:
+        with pytest.raises(
             ValueError,
-            "v_tol should not be negative",
+            match="v_tol should not be negative",
         ):
-            parse_bpx_str("String", v_tol=-0.001)
+            parse_bpx_str('{"BPX": 1.0}', v_tol=-0.001)
 
-    def test_parse_string(self):
+    def test_parse_string(self) -> None:
         test = copy.copy(self.base)
-        with self.assertWarns(UserWarning):
+        with pytest.warns(UserWarning):
             parse_bpx_str(test)
 
-    def test_parse_string_tolerance(self):
+    def test_parse_string_tolerance(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base)
         parse_bpx_str(test, v_tol=0.002)

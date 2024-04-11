@@ -1,13 +1,17 @@
+import copy
 import unittest
 import warnings
-import copy
-from pydantic import parse_obj_as, ValidationError
+
+import pytest
+from pydantic import TypeAdapter, ValidationError
 
 from bpx import BPX
 
+adapter = TypeAdapter(BPX)
+
 
 class TestSchema(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.base = {
             "Header": {
                 "BPX": 1.0,
@@ -30,9 +34,7 @@ class TestSchema(unittest.TestCase):
                     "Initial concentration [mol.m-3]": 1000,
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
-                    "Diffusivity [m2.s-1]": (
-                        "8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"
-                    ),
+                    "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -197,107 +199,103 @@ class TestSchema(unittest.TestCase):
             },
         }
 
-    def test_simple(self):
+    def test_simple(self) -> None:
         test = copy.copy(self.base)
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_simple_spme(self):
+    def test_simple_spme(self) -> None:
         test = copy.copy(self.base)
         test["Header"]["Model"] = "SPMe"
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_simple_spm(self):
+    def test_simple_spm(self) -> None:
         test = copy.copy(self.base_spm)
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_bad_model(self):
+    def test_bad_model(self) -> None:
         test = copy.copy(self.base)
         test["Header"]["Model"] = "Wrong model type"
-        with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
 
-    def test_bad_dfn(self):
+    def test_bad_dfn(self) -> None:
         test = copy.copy(self.base_spm)
         test["Header"]["Model"] = "DFN"
-        with self.assertWarnsRegex(
+        with pytest.warns(
             UserWarning,
-            "The model type DFN does not correspond to the parameter set",
+            match="The model type DFN does not correspond to the parameter set",
         ):
-            parse_obj_as(BPX, test)
+            adapter.validate_python(test)
 
-    def test_bad_spme(self):
+    def test_bad_spme(self) -> None:
         test = copy.copy(self.base_spm)
         test["Header"]["Model"] = "SPMe"
-        with self.assertWarnsRegex(
+        with pytest.warns(
             UserWarning,
-            "The model type SPMe does not correspond to the parameter set",
+            match="The model type SPMe does not correspond to the parameter set",
         ):
-            parse_obj_as(BPX, test)
+            adapter.validate_python(test)
 
-    def test_bad_spm(self):
+    def test_bad_spm(self) -> None:
         test = copy.copy(self.base)
         test["Header"]["Model"] = "SPM"
-        with self.assertWarnsRegex(
+        with pytest.warns(
             UserWarning,
-            "The model type SPM does not correspond to the parameter set",
+            match="The model type SPM does not correspond to the parameter set",
         ):
-            parse_obj_as(BPX, test)
+            adapter.validate_python(test)
 
-    def test_table(self):
+    def test_table(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
             "x": [1.0, 2.0],
             "y": [2.3, 4.5],
         }
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_bad_table(self):
+    def test_bad_table(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
             "x": [1.0, 2.0],
             "y": [2.3],
         }
-        with self.assertRaisesRegex(
+        with pytest.raises(
             ValidationError,
-            "x & y should be same length",
+            match="x & y should be same length",
         ):
-            parse_obj_as(BPX, test)
+            adapter.validate_python(test)
 
-    def test_function(self):
+    def test_function(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * x + 3"
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_function_with_exp(self):
+    def test_function_with_exp(self) -> None:
         test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "1.0 * exp(x) + 3"
-        parse_obj_as(BPX, test)
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * exp(x) + 3"
+        adapter.validate_python(test)
 
-    def test_bad_function(self):
+    def test_bad_function(self) -> None:
         test = copy.copy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "this is not a function"
-        with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "this is not a function"
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
 
-    def test_to_python_function(self):
+    def test_to_python_function(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "2.0 * x"
-        obj = parse_obj_as(BPX, test)
+        obj = adapter.validate_python(test)
         funct = obj.parameterisation.electrolyte.conductivity
         pyfunct = funct.to_python_function()
-        self.assertEqual(pyfunct(2.0), 4.0)
+        assert pyfunct(2.0) == 4.0
 
-    def test_bad_input(self):
+    def test_bad_input(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["Electrolyte"]["bad"] = "this shouldn't be here"
-        with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
 
-    def test_validation_data(self):
+    def test_validation_data(self) -> None:
         test = copy.copy(self.base)
         test["Validation"] = {
             "Experiment 1": {
@@ -314,52 +312,52 @@ class TestSchema(unittest.TestCase):
             },
         }
 
-    def test_check_sto_limits_validator(self):
+    def test_check_sto_limits_validator(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_check_sto_limits_validator_high_voltage(self):
+    def test_check_sto_limits_validator_high_voltage(self) -> None:
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
-        with self.assertWarns(UserWarning):
-            parse_obj_as(BPX, test)
+        with pytest.warns(UserWarning):
+            adapter.validate_python(test)
 
-    def test_check_sto_limits_validator_high_voltage_tolerance(self):
+    def test_check_sto_limits_validator_high_voltage_tolerance(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
-        BPX.settings.tolerances["Voltage [V]"] = 0.25
-        parse_obj_as(BPX, test)
+        BPX.Settings.tolerances["Voltage [V]"] = 0.25
+        adapter.validate_python(test)
 
-    def test_check_sto_limits_validator_low_voltage(self):
+    def test_check_sto_limits_validator_low_voltage(self) -> None:
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
-        with self.assertWarns(UserWarning):
-            parse_obj_as(BPX, test)
+        with pytest.warns(UserWarning):
+            adapter.validate_python(test)
 
-    def test_check_sto_limits_validator_low_voltage_tolerance(self):
+    def test_check_sto_limits_validator_low_voltage_tolerance(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
-        BPX.settings.tolerances["Voltage [V]"] = 0.35
-        parse_obj_as(BPX, test)
+        BPX.Settings.tolerances["Voltage [V]"] = 0.35
+        adapter.validate_python(test)
 
-    def test_user_defined(self):
+    def test_user_defined(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["User-defined"] = {
             "a": 1.0,
             "b": 2.0,
             "c": 3.0,
         }
-        obj = parse_obj_as(BPX, test)
-        self.assertEqual(obj.parameterisation.user_defined.a, 1)
-        self.assertEqual(obj.parameterisation.user_defined.b, 2)
-        self.assertEqual(obj.parameterisation.user_defined.c, 3)
+        obj = adapter.validate_python(test)
+        assert obj.parameterisation.user_defined.a == 1
+        assert obj.parameterisation.user_defined.b == 2
+        assert obj.parameterisation.user_defined.c == 3
 
-    def test_user_defined_table(self):
+    def test_user_defined_table(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["User-defined"] = {
             "a": {
@@ -367,21 +365,21 @@ class TestSchema(unittest.TestCase):
                 "y": [2.3, 4.5],
             },
         }
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_user_defined_function(self):
+    def test_user_defined_function(self) -> None:
         test = copy.copy(self.base)
         test["Parameterisation"]["User-defined"] = {"a": "2.0 * x"}
-        parse_obj_as(BPX, test)
+        adapter.validate_python(test)
 
-    def test_bad_user_defined(self):
+    def test_bad_user_defined(self) -> None:
         test = copy.copy(self.base)
         # bool not allowed type
         test["Parameterisation"]["User-defined"] = {
             "bad": True,
         }
-        with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
+        with pytest.raises(TypeError):
+            adapter.validate_python(test)
 
 
 if __name__ == "__main__":
