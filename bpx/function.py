@@ -101,6 +101,12 @@ class Function(str):
             # Delete
             tmp.close()
             Path(tmp.name).unlink(missing_ok=True)
+            if module.__cached__:
+                cached_file = Path(module.__cached__)
+                cached_path = cached_file.parent
+                cached_file.unlink(missing_ok=True)
+                if not any(cached_path.iterdir()):
+                    cached_path.rmdir()
 
         # return the new function object
         return getattr(module, function_name)
