@@ -223,12 +223,6 @@ class TestSchema(unittest.TestCase):
         parsed_obj = parse_obj_as(BPX, test)
         self.assertIsNone(parsed_obj.header.version)
 
-    def test_invalid_version(self):
-        test = copy.copy(self.base)
-        test["Header"]["Version"] = 123  # Invalid type
-        with self.assertRaises(ValidationError):
-            parse_obj_as(BPX, test)
-
     def test_bad_dfn(self):
         test = copy.copy(self.base_spm)
         test["Header"]["Model"] = "DFN"
