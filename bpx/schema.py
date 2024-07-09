@@ -60,6 +60,13 @@ class Header(ExtraBaseModel):
         description=('Model type ("SPM", "SPMe", "DFN")'),
     )
 
+    version: str = Field(
+        None,
+        alias="Version",
+        example="0.1.1",
+        description="BPX file version",  
+    )
+
 
 class Cell(ExtraBaseModel):
     """
