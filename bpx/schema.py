@@ -64,7 +64,8 @@ class Header(ExtraBaseModel):
         None,
         alias="Version",
         example="0.1.1",
-        description="BPX file version",  )
+        description="BPX file version",  
+    )
 
 
 class Cell(ExtraBaseModel):

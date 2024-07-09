@@ -10,6 +10,7 @@ class TestSchema(unittest.TestCase):
     def setUp(self):
         self.base = {
             "Header": {
+                "Version": "0.1.1",
                 "BPX": 1.0,
                 "Model": "DFN",
             },
@@ -213,6 +214,18 @@ class TestSchema(unittest.TestCase):
     def test_bad_model(self):
         test = copy.copy(self.base)
         test["Header"]["Model"] = "Wrong model type"
+        with self.assertRaises(ValidationError):
+            parse_obj_as(BPX, test)
+
+    def test_missing_version(self):
+        test = copy.copy(self.base)
+        del test["Header"]["Version"]
+        parsed_obj = parse_obj_as(BPX, test)
+        self.assertIsNone(parsed_obj.header.version)
+
+    def test_invalid_version(self):
+        test = copy.copy(self.base)
+        test["Header"]["Version"] = 123  # Invalid type
         with self.assertRaises(ValidationError):
             parse_obj_as(BPX, test)
 
