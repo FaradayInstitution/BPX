@@ -7,7 +7,7 @@
       },
       "Parameterisation": {
             "Cell": {
-                  "Ambient temperature [K]": 298.15,
+
                   "Initial temperature [K]": 298.15,
                   "Reference temperature [K]": 298.15,
                   "Lower voltage cut-off [V]": 2.7,
