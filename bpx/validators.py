@@ -1,5 +1,5 @@
 from warnings import warn
-
+import pybamm
 
 def check_sto_limits(cls, values):
     """
@@ -27,7 +27,13 @@ def check_sto_limits(cls, values):
     tol = cls.settings.tolerances["Voltage [V]"]
 
     # Checks the maximum voltage estimated from STO
-    V_max_sto = ocp_p(sto_p_min) - ocp_n(sto_n_max)
+    negative_ocp = ocp_n(sto_n_max)
+    if isinstance(negative_ocp, pybamm.Scalar):
+        negative_ocp = negative_ocp.evaluate()
+    positive_ocp = ocp_p(sto_p_min)
+    if isinstance(positive_ocp, pybamm.Scalar):
+        positive_ocp = positive_ocp.evaluate()
+    V_max_sto = positive_ocp - negative_ocp
     if V_max_sto - V_max > tol:
         warn(
             f"The maximum voltage computed from the STO limits ({V_max_sto} V) "
@@ -36,7 +42,7 @@ def check_sto_limits(cls, values):
         )
 
     # Checks the minimum voltage estimated from STO
-    V_min_sto = ocp_p(sto_p_max) - ocp_n(sto_n_min)
+    V_min_sto = positive_ocp - negative_ocp
     if V_min_sto - V_min < -tol:
         warn(
             f"The minimum voltage computed from the STO limits ({V_min_sto} V) "
