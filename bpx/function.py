@@ -31,6 +31,8 @@ class Function(str):
     def validate(cls, v: str) -> Function:
         if not isinstance(v, str):
             raise TypeError("string required")
+        if '"' in v:
+            return cls(v)
         try:
             cls.parser.parse_string(v)
         except ExpressionParser.ParseException as e:
@@ -56,6 +58,12 @@ class Function(str):
         preamble += "\n\n"
         arg_names = ["x"]
         arg_str = ",".join(arg_names)
+        if '"' in self:
+            nested = True
+        else:
+            nested = False
+        if nested:
+            preamble += f"import {self.split('.')[0]}\n\n"
         function_name = "reconstructed_function"
         function_def = f"def {function_name}({arg_str}):\n"
         function_body = f"  return {self}"
@@ -77,4 +85,7 @@ class Function(str):
 
         # return the new function object
         value = getattr(module, function_name)
-        return value
+        if nested:
+            return value(0)
+        else:
+            return value
