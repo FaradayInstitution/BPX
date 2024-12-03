@@ -6,6 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "bpx"
 authors = [{name = "Martin Robinson", email = "martin.robinson@dtc.ox.ac.uk"}]
 readme = "README.md"
+requires-python = ">=3.9"
 dynamic = ["version", "description"]
 dependencies = [
     "devtools",
@@ -15,8 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    'coverage',                 # Coverage checking
-    'flake8>=3',                # Style checking
+    "coverage",                 # Coverage checking
+    "flake8>=3",                # Style checking
     "sphinx>=6",
     "sphinx_rtd_theme>=0.5",
     "pydata-sphinx-theme",
