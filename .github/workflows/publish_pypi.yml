@@ -1,38 +1,62 @@
 name: Build and publish package to PyPI
 
 on:
-  push:
-    tags:
-    - '*'
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       target:
-        description: 'Deployment target. Can be "pypi" or "testpypi"'
-        default: "pypi"
+        description: 'Deployment target. Can be "pypi" or "testpypi", or blank to skip publishing.'
+        default: ""
 
 jobs:
-  publish_pypi:
-    name: Build wheels on ubuntu-latest
+  build:
+    name: Build sdist and wheel
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install build
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
       - name: Build package
-        run: python -m build
-      - name: Publish on PyPI
-        if: github.event.inputs.target == 'pypi'
+        run: pipx run build
+
+      - name: Upload sdist and wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/*
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bpx
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    needs: [build]
+    if: >-
+      github.event_name == 'release' &&
+      github.event.action == 'published' ||
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.target == 'pypi' ||
+      github.event.inputs.target == 'testpypi'
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Upload to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-      - name: Publish on TestPyPI
+          packages-dir: dist
+          attestations: true
+
+      - name: Upload to TestPyPI
         if: github.event.inputs.target == 'testpypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist
+          attestations: true
