@@ -48,6 +48,7 @@ jobs:
           merge-multiple: true
 
       - name: Upload to PyPI
+        if: github.event.inputs.target == 'pypi' || github.event_name == 'release' && github.event.action == 'published'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
