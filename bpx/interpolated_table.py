@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 from pydantic import BaseModel, ValidationInfo, field_validator
 
 
@@ -11,8 +9,8 @@ class InterpolatedTable(BaseModel):
     by two lists of floats, x and y. The function is defined by interpolation.
     """
 
-    x: List[float]
-    y: List[float]
+    x: list[float]
+    y: list[float]
 
     @field_validator("y")
     @classmethod

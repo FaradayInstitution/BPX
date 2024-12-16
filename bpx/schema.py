@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar, Dict, List, Literal, Union, get_args
+from typing import ClassVar, Literal, Union, get_args
 from warnings import warn
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator, root_validator
@@ -300,7 +300,7 @@ class ElectrodeBlended(Electrode):
     Class for electrode composed of a blend of active materials.
     """
 
-    particle: Dict[str, Particle] = Field(alias="Particle")
+    particle: dict[str, Particle] = Field(alias="Particle")
 
 
 class ElectrodeSingleSPM(ContactBase, Particle):
@@ -316,7 +316,7 @@ class ElectrodeBlendedSPM(ContactBase):
     Particle type models.
     """
 
-    particle: Dict[str, Particle] = Field(alias="Particle")
+    particle: dict[str, Particle] = Field(alias="Particle")
 
 
 class UserDefined(BaseModel):
@@ -349,22 +349,22 @@ class Experiment(ExtraBaseModel):
     A class to store experimental data (time, current, voltage, temperature).
     """
 
-    time: List[float] = Field(
+    time: list[float] = Field(
         alias="Time [s]",
         examples=[[0, 0.1, 0.2, 0.3, 0.4]],
         description="Time in seconds (list of floats)",
     )
-    current: List[float] = Field(
+    current: list[float] = Field(
         alias="Current [A]",
         examples=[[-5, -5, -5, -5, -5]],
         description="Current vs time",
     )
-    voltage: List[float] = Field(
+    voltage: list[float] = Field(
         alias="Voltage [V]",
         examples=[[4.2, 4.1, 4.0, 3.9, 3.8]],
         description="Voltage vs time",
     )
-    temperature: List[float] = Field(
+    temperature: list[float] = Field(
         None,
         alias="Temperature [K]",
         examples=[[298, 298, 298, 298, 298]],
@@ -481,7 +481,7 @@ class BPX(ExtraBaseModel):
         alias="Header",
     )
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
-    validation: Dict[str, Experiment] = Field(None, alias="Validation")
+    validation: dict[str, Experiment] = Field(None, alias="Validation")
 
     @root_validator(skip_on_failure=True)
     @classmethod
