@@ -218,7 +218,7 @@ texinfo_documents = [
         "BPX",
         "One line description of project.",
         "Miscellaneous",
-    )
+    ),
 ]
 
 

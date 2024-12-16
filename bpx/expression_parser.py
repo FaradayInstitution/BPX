@@ -18,7 +18,6 @@ class ExpressionParser:
     def __init__(self) -> None:
         fnumber = ppc.number()
         ident = pp.Literal("x")
-        fn_ident = pp.Literal("x")
 
         fn_ident = pp.Word(pp.alphas, pp.alphanums)
         plus, minus, mult, div = map(pp.Literal, "+-*/")

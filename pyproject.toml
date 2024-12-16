@@ -146,7 +146,6 @@ select = [
 ignore = [
     "ANN101", # missing type self
     "ANN102", # missing type cls
-    "COM812", # trailing comma missing
     "UP006",  # non pep585 annotation
     "UP007",  # non pep604 annotation
 ]
