@@ -307,7 +307,7 @@ class ElectrodeBlendedSPM(ContactBase):
 class UserDefined(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    def __init__(self, **data: int) -> None:
+    def __init__(self, **data: dict) -> None:
         """
         Overwrite the default __init__ to convert strings to Function objects and
         dicts to InterpolatedTable objects
