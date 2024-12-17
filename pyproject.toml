@@ -1,23 +1,55 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "bpx"
-authors = [{name = "Martin Robinson", email = "martin.robinson@dtc.ox.ac.uk"}]
+dynamic = ["version"]
+description = "An implementation of the Battery Parameter eXchange (BPX) format in Pydantic."
 readme = "README.md"
 requires-python = ">=3.9"
-dynamic = ["version", "description"]
+license = { file = "LICENSE.txt" }
+keywords = [
+    "bpx",
+    "battery",
+]
+authors = [
+  { name = "Martin Robinson", email = "martin.robinson@dtc.ox.ac.uk" },
+  { name = "Chuck Liu", email = "liuchengkun@finalfrontier.cn" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
 dependencies = [
-    "devtools",
-    "pydantic<2",
+    "pydantic >= 2.6",
     "pyparsing",
+    "pyyaml",
+    "orjson",
 ]
 
+[project.urls]
+Homepage = "https://github.com/FaradayInstitution/BPX"
+Repository = "https://github.com/FaradayInstitution/BPX"
+
 [project.optional-dependencies]
+# Dependencies intended for use by developers
 dev = [
-    "coverage",                 # Coverage checking
-    "flake8>=3",                # Style checking
+    "ruff",
+    "pre-commit",
+    "pyclean",
+    "pytest",
+    "coverage[toml] >= 6.5",
+    "devtools",
+]
+docs = [
     "sphinx>=6",
     "sphinx_rtd_theme>=0.5",
     "pydata-sphinx-theme",
@@ -25,4 +57,139 @@ dev = [
     "sphinx-copybutton",
     "myst-parser",
     "sphinx-inline-tabs",
+]
+
+[tool.hatch.version]
+path = "bpx/__init__.py"
+
+[tool.hatch.envs.dev]
+features = [
+    "dev",
+    "docs",
+]
+post-install-commands = [
+    "pip install --upgrade pip",
+]
+[tool.hatch.envs.dev.scripts]
+clean = "pyclean ."
+check = "ruff check {args}"
+format = "ruff format {args}"
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+  "- coverage combine",
+  "coverage report",
+]
+cov = [
+  "test-cov",
+  "cov-report",
+]
+
+[tool.hatch.envs.hatch-static-analysis]
+config-path = "none"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 80
+
+[tool.ruff.lint]
+select = [
+    "F",     # pyflakes
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "C901",  # mccabe complex-structure
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "YTT",   # flake8-2020
+    "ANN",   # flake8-annotations
+    "ASYNC", # flake8-async
+    "S",     # flake8-bandit
+    "BLE",   # flake8-blind-except
+    "FBT",   # flake8-boolean-trap
+    "B",     # flake8-bugbear
+    "A",     # flake8-builtins
+    "COM",   # flake8-commas
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "DJ",    # flake8-django
+    "EM",    # flake8-errmsg
+    "ICN",   # flake8-import-conventiions
+    "PIE",   # flake8-pie
+    "T20",   # flake8-print
+    "PYI",   # flake8-pyi
+    "PT",    # flake8-pytest-style
+    "Q",     # flake8-quotes
+    "RSE",   # flake8-raise
+    "RET",   # flake8-return
+    "SLF",   # flake8-self
+    "SLOT",  # flake8-slots
+    "SIM",   # flake8-simplify
+    "TID",   # flake8-tidy-imports
+    "TCH",   # flake8-type-checking
+    "ARG",   # flake8-unused-arguments
+    "PTH",   # flake8-use-pathlib
+    "TD",    # flake8-todos
+    "FIX",   # flake8-fixme
+    "ERA",   # eradicate
+    "PD",    # pandas-vet
+    "PL",    # pylint
+    "TRY",   # tryceratops
+    "FLY",   # flynt
+    "NPY",   # numpy-specific rules
+    "PERF",  # perflint
+    "RUF",   # ruff-specific rules
+]
+ignore = [
+    "ANN101", # missing type self
+    "ANN102", # missing type cls
+    "UP006",  # non pep585 annotation
+    "UP007",  # non pep604 annotation
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["S101", "PLR2004"]
+"docs/conf.py" = ["A001", "ERA001", "PTH100", "T201", "UP031"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "-v",
+    "-ra",
+    "--strict-config",
+    "--strict-markers",
+    "--import-mode=importlib",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+    "ignore::pydantic.PydanticDeprecatedSince20",
+]
+testpaths = [
+    "tests",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = [
+    "bpx",
+]
+disable_warnings = [
+    "no-data-collected",
+]
+omit = [
+  "bpx/__init__.py",
+]
+
+[tool.coverage.report]
+precision = 2
+fail_under = 0
+show_missing = true
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
 ]
