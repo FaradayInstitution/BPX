@@ -26,7 +26,7 @@ def parse_bpx_obj(bpx: dict, v_tol: float = 0.001) -> BPX:
 
     BPX.Settings.tolerances["Voltage [V]"] = v_tol
 
-    return BPX.model_validate(bpx)
+    return BPX.model_validate(bpx, strict=False)
 
 
 def parse_bpx_file(filename: str | Path, v_tol: float = 0.001) -> BPX:
