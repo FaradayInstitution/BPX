@@ -86,7 +86,7 @@ class Function(str):
         source_code = preamble + function_def + function_body
 
         with tempfile.NamedTemporaryFile(suffix=f"{function_name}.py", delete=False) as tmp:
-            tmp.write((source_code).encode())
+            tmp.write(source_code.encode())
             tmp.flush()
             spec = util.spec_from_file_location("tmp", tmp.name)
             module = util.module_from_spec(spec)
