@@ -88,8 +88,6 @@ class Function(str):
         with tempfile.NamedTemporaryFile(suffix=f"{function_name}.py", delete=False) as tmp:
             tmp.write((source_code).encode())
             tmp.flush()
-
-            # Now load that file as a module
             spec = util.spec_from_file_location("tmp", tmp.name)
             module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
