@@ -32,7 +32,6 @@ dependencies = [
     "pydantic >= 2.6",
     "pyparsing",
     "pyyaml",
-    "orjson",
 ]
 
 [project.urls]

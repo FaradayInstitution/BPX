@@ -52,7 +52,7 @@ def parse_bpx_file(filename: str, v_tol: float = 0.001) -> BPX:
         with Path(filename).open(encoding="utf-8") as f:
             bpx = yaml.safe_load(f)
     else:
-        import orjson as json
+        import json
 
         with Path(filename).open(encoding="utf-8") as f:
             bpx = json.loads(f.read())
@@ -77,7 +77,7 @@ def parse_bpx_str(bpx: str, v_tol: float = 0.001) -> BPX:
     BPX:
         a parsed BPX model
     """
-    import orjson as json
+    import json
 
     bpx = json.loads(bpx)
     return parse_bpx_obj(bpx, v_tol)
