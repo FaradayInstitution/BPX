@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from .schema import BPX
 
 
@@ -26,13 +29,13 @@ def parse_bpx_obj(bpx: dict, v_tol: float = 0.001) -> BPX:
     return BPX.model_validate(bpx)
 
 
-def parse_bpx_file(filename: str, v_tol: float = 0.001) -> BPX:
+def parse_bpx_file(filename: str | Path, v_tol: float = 0.001) -> BPX:
     """
     A convenience function to parse a bpx file into a BPX model.
 
     Parameters
     ----------
-    filename: str
+    filename: str or Path
         a filepath to a bpx file
     v_tol: float
         absolute tolerance in [V] to validate the voltage limits, 1 mV by default
@@ -42,18 +45,12 @@ def parse_bpx_file(filename: str, v_tol: float = 0.001) -> BPX:
     BPX: :class:`bpx.BPX`
         a parsed BPX model
     """
-
-    from pathlib import Path
-
-    bpx = ""
     if filename.endswith((".yml", ".yaml")):
         import yaml
 
         with Path(filename).open(encoding="utf-8") as f:
             bpx = yaml.safe_load(f)
     else:
-        import json
-
         with Path(filename).open(encoding="utf-8") as f:
             bpx = json.loads(f.read())
 
@@ -77,7 +74,5 @@ def parse_bpx_str(bpx: str, v_tol: float = 0.001) -> BPX:
     BPX:
         a parsed BPX model
     """
-    import json
-
     bpx = json.loads(bpx)
     return parse_bpx_obj(bpx, v_tol)
