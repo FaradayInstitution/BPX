@@ -319,10 +319,6 @@ class UserDefined(BaseModel):
                 data[k] = InterpolatedTable(**v)
         super().__init__(**data)
 
-    @property
-    def extra_fields(self) -> set[str]:
-        return set(self.__dict__) - set(self.model_fields)
-
     @model_validator(mode="before")
     @classmethod
     def validate_extra_fields(cls, values: dict) -> dict:
