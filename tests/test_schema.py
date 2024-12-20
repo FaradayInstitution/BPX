@@ -1,6 +1,7 @@
 import copy
 import unittest
 import warnings
+from typing import Any
 
 import pytest
 from pydantic import TypeAdapter, ValidationError
@@ -12,7 +13,7 @@ adapter = TypeAdapter(BPX)
 
 class TestSchema(unittest.TestCase):
     def setUp(self) -> None:
-        self.base = {
+        self.base : dict[str, Any] = {
             "Header": {
                 "BPX": 1.0,
                 "Model": "DFN",
@@ -200,26 +201,26 @@ class TestSchema(unittest.TestCase):
         }
 
     def test_simple(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         adapter.validate_python(test)
 
     def test_simple_spme(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "SPMe"
         adapter.validate_python(test)
 
     def test_simple_spm(self) -> None:
-        test = copy.copy(self.base_spm)
+        test = copy.deepcopy(self.base_spm)
         adapter.validate_python(test)
 
     def test_bad_model(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "Wrong model type"
         with pytest.raises(ValidationError):
             adapter.validate_python(test)
 
     def test_bad_dfn(self) -> None:
-        test = copy.copy(self.base_spm)
+        test = copy.deepcopy(self.base_spm)
         test["Header"]["Model"] = "DFN"
         with pytest.warns(
             UserWarning,
@@ -228,7 +229,7 @@ class TestSchema(unittest.TestCase):
             adapter.validate_python(test)
 
     def test_bad_spme(self) -> None:
-        test = copy.copy(self.base_spm)
+        test = copy.deepcopy(self.base_spm)
         test["Header"]["Model"] = "SPMe"
         with pytest.warns(
             UserWarning,
@@ -237,7 +238,7 @@ class TestSchema(unittest.TestCase):
             adapter.validate_python(test)
 
     def test_bad_spm(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "SPM"
         with pytest.warns(
             UserWarning,
@@ -246,7 +247,7 @@ class TestSchema(unittest.TestCase):
             adapter.validate_python(test)
 
     def test_table(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
             "x": [1.0, 2.0],
             "y": [2.3, 4.5],
@@ -254,7 +255,7 @@ class TestSchema(unittest.TestCase):
         adapter.validate_python(test)
 
     def test_bad_table(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = {
             "x": [1.0, 2.0],
             "y": [2.3],
@@ -266,23 +267,23 @@ class TestSchema(unittest.TestCase):
             adapter.validate_python(test)
 
     def test_function(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * x + 3"
         adapter.validate_python(test)
 
     def test_function_with_exp(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * exp(x) + 3"
         adapter.validate_python(test)
 
     def test_bad_function(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "this is not a function"
         with pytest.raises(ValidationError):
             adapter.validate_python(test)
 
     def test_to_python_function(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "2.0 * x"
         obj = adapter.validate_python(test)
         funct = obj.parameterisation.electrolyte.conductivity
@@ -290,13 +291,13 @@ class TestSchema(unittest.TestCase):
         assert pyfunct(2.0) == 4.0
 
     def test_bad_input(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["bad"] = "this shouldn't be here"
         with pytest.raises(ValidationError):
             adapter.validate_python(test)
 
     def test_validation_data(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Validation"] = {
             "Experiment 1": {
                 "Time [s]": [0, 1000, 2000],
@@ -314,39 +315,39 @@ class TestSchema(unittest.TestCase):
 
     def test_check_sto_limits_validator(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
-        test = copy.copy(self.base_non_blended)
+        test = copy.deepcopy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
         adapter.validate_python(test)
 
     def test_check_sto_limits_validator_high_voltage(self) -> None:
-        test = copy.copy(self.base_non_blended)
+        test = copy.deepcopy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
         with pytest.warns(UserWarning):
             adapter.validate_python(test)
 
     def test_check_sto_limits_validator_high_voltage_tolerance(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
-        test = copy.copy(self.base_non_blended)
+        test = copy.deepcopy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
         BPX.Settings.tolerances["Voltage [V]"] = 0.25
         adapter.validate_python(test)
 
     def test_check_sto_limits_validator_low_voltage(self) -> None:
-        test = copy.copy(self.base_non_blended)
+        test = copy.deepcopy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
         with pytest.warns(UserWarning):
             adapter.validate_python(test)
 
     def test_check_sto_limits_validator_low_voltage_tolerance(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
-        test = copy.copy(self.base_non_blended)
+        test = copy.deepcopy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
         BPX.Settings.tolerances["Voltage [V]"] = 0.35
         adapter.validate_python(test)
 
     def test_user_defined(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["User-defined"] = {
             "a": 1.0,
             "b": 2.0,
@@ -358,7 +359,7 @@ class TestSchema(unittest.TestCase):
         assert obj.parameterisation.user_defined.c == 3
 
     def test_user_defined_table(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["User-defined"] = {
             "a": {
                 "x": [1.0, 2.0],
@@ -368,12 +369,12 @@ class TestSchema(unittest.TestCase):
         adapter.validate_python(test)
 
     def test_user_defined_function(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         test["Parameterisation"]["User-defined"] = {"a": "2.0 * x"}
         adapter.validate_python(test)
 
     def test_bad_user_defined(self) -> None:
-        test = copy.copy(self.base)
+        test = copy.deepcopy(self.base)
         # bool not allowed type
         test["Parameterisation"]["User-defined"] = {
             "bad": True,
