@@ -322,6 +322,7 @@ class UserDefined(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_extra_fields(cls, values: dict) -> dict:
+        print(values)
         for k, v in values.items():
             if not isinstance(v, get_args(FloatFunctionTable)):
                 error_msg = f"{k} must be of type 'FloatFunctionTable'"
