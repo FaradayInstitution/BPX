@@ -15,7 +15,6 @@ keywords = [
 ]
 authors = [
   { name = "Martin Robinson", email = "martin.robinson@dtc.ox.ac.uk" },
-  { name = "Chuck Liu", email = "liuchengkun@finalfrontier.cn" },
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
