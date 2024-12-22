@@ -7,7 +7,7 @@ name = "bpx"
 dynamic = ["version"]
 description = "An implementation of the Battery Parameter eXchange (BPX) format in Pydantic."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9, <3.13"
 license = { file = "LICENSE.txt" }
 keywords = [
     "bpx",
