@@ -12,8 +12,15 @@ To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX
 
 ## 🚀 Installation
 The BPX package can be installed using pip
+
 ```bash
 pip install bpx
+```
+
+or conda
+
+```bash
+conda install -c conda-forge bpx
 ```
 
 BPX is available on GNU/Linux, MacOS and Windows. We strongly recommend to install PyBaMM within a python [virtual environment](https://docs.python.org/3/tutorial/venv.html), in order not to alter any distribution python files.
