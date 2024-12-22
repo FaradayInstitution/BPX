@@ -26,11 +26,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install hatch "coverage[toml]"
       - name: Lint with ruff
-        run: |
-          hatch run dev:check
-      - name: Test with unittest 
-        run: |
-          hatch run dev:cov
+        run: hatch run dev:check
+      - name: Run unit tests 
+        run: hatch run dev:cov
       - name: Upload Coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
         uses: codecov/codecov-action@v2
