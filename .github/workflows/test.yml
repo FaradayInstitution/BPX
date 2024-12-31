@@ -3,13 +3,16 @@ name: BPX-tests
 on:
   workflow_dispatch:
   pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -21,14 +24,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install hatch
-          pip install .
+          pip install hatch "coverage[toml]"
       - name: Lint with ruff
-        run: |
-          hatch run dev:check
-      - name: Test with unittest 
-        run: |
-          hatch run dev:cov
+        run: hatch run dev:check
+      - name: Run unit tests 
+        run: hatch run dev:cov
       - name: Upload Coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
         uses: codecov/codecov-action@v2
