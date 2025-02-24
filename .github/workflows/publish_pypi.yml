@@ -42,7 +42,7 @@ jobs:
           echo -e '\n```\n' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload sdist and wheel artifacts
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: distributions
           path: dist/*
@@ -71,13 +71,13 @@ jobs:
 
       - name: Upload to PyPI
         if: github.event.inputs.target == 'pypi' || github.event_name == 'release' && github.event.action == 'published'
-        uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70 # v1.12.3
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
         with:
           packages-dir: dist
 
       - name: Upload to TestPyPI
         if: github.event.inputs.target == 'testpypi'
-        uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70 # v1.12.3
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: dist
