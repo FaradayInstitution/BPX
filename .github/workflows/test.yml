@@ -3,31 +3,32 @@ name: BPX-tests
 on:
   workflow_dispatch:
   pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install coverage flake8
-          pip install .
-      - name: Lint with flake8
-        run: |
-          flake8 . --count --exit-zero --show-source --statistics
-      - name: Test with unittest 
-        run: |
-          coverage run -m unittest
+          pip install hatch "coverage[toml]"
+      - name: Lint with ruff
+        run: hatch run dev:check
+      - name: Run unit tests 
+        run: hatch run dev:cov
       - name: Upload Coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v5
