@@ -1,7 +1,10 @@
 from warnings import warn
 import pybamm
 
-def check_sto_limits(cls, values):
+from .base_extra_model import ExtraBaseModel
+
+
+def check_sto_limits(cls: ExtraBaseModel, values: dict) -> dict:
     """
     Validates that the STO limits subbed into the OCPs give the correct voltage limits.
     Works if both OCPs are defined as functions.
@@ -20,11 +23,11 @@ def check_sto_limits(cls, values):
     sto_n_max = values.get("negative_electrode").maximum_stoichiometry
     sto_p_min = values.get("positive_electrode").minimum_stoichiometry
     sto_p_max = values.get("positive_electrode").maximum_stoichiometry
-    V_min = values.get("cell").lower_voltage_cutoff
-    V_max = values.get("cell").upper_voltage_cutoff
+    v_min = values.get("cell").lower_voltage_cutoff
+    v_max = values.get("cell").upper_voltage_cutoff
 
     # Voltage tolerance from `settings` data class
-    tol = cls.settings.tolerances["Voltage [V]"]
+    tol = cls.Settings.tolerances["Voltage [V]"]
 
     # Checks the maximum voltage estimated from STO
     negative_ocp = ocp_n(sto_n_max)
@@ -36,18 +39,21 @@ def check_sto_limits(cls, values):
     V_max_sto = positive_ocp - negative_ocp
     if V_max_sto - V_max > tol:
         warn(
-            f"The maximum voltage computed from the STO limits ({V_max_sto} V) "
-            f"is higher than the upper voltage cut-off ({V_max} V) "
-            f"with the absolute tolerance v_tol = {tol} V"
+            f"The maximum voltage computed from the STO limits ({v_max_sto} V) "
+            f"is higher than the upper voltage cut-off ({v_max} V) "
+            f"with the absolute tolerance v_tol = {tol} V",
+            stacklevel=2,
         )
 
     # Checks the minimum voltage estimated from STO
     V_min_sto = positive_ocp - negative_ocp
     if V_min_sto - V_min < -tol:
         warn(
-            f"The minimum voltage computed from the STO limits ({V_min_sto} V) "
-            f"is less than the lower voltage cut-off ({V_min} V) "
-            f"with the absolute tolerance v_tol = {tol} V"
+            f"The minimum voltage computed from the STO limits ({v_min_sto} V) "
+            f"is less than the lower voltage cut-off ({v_min} V) "
+            f"with the absolute tolerance v_tol = {tol} V",
+            stacklevel=2,
         )
 
     return values
+

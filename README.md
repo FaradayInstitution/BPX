@@ -6,14 +6,21 @@ An implementation of the Battery Parameter eXchange (BPX) format in Pydantic. BP
 
 This repository features a Pydantic-based parser for JSON files in the BPX format, which validates your file against the schema.
 
-To support the new open standard, [About:Energy](https://www.aboutenergy.io/) have supplied two parameters sets for an NMC and LFP cell. The BPX files and associated examples and information can be found on the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/).
+To support the new open standard, [About:Energy](https://www.aboutenergy.io/) have supplied two parameter sets for an NMC and LFP cell. The BPX files and associated examples and information can be found on the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/).
 
-To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX example repository](https://github.com/pybamm-team/bpx-example).
+To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX example notebook]([https://github.com/pybamm-team/bpx-example](https://github.com/pybamm-team/PyBaMM/blob/1ead6c512a6cff3effaa35f47efb354ec4a3c8c8/docs/source/examples/notebooks/parameterization/bpx.ipynb)).
 
 ## 🚀 Installation
 The BPX package can be installed using pip
+
 ```bash
 pip install bpx
+```
+
+or conda
+
+```bash
+conda install -c conda-forge bpx
 ```
 
 BPX is available on GNU/Linux, MacOS and Windows. We strongly recommend to install PyBaMM within a python [virtual environment](https://docs.python.org/3/tutorial/venv.html), in order not to alter any distribution python files.
@@ -26,7 +33,7 @@ import bpx
 filename = 'path/to/my/file.json'
 my_params = bpx.parse_bpx_file(filename)
 ```
-`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obatin example files, see the `examples` folder, the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/), or the [BPX example repository](https://github.com/pybamm-team/bpx-example).
+`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obtain example files, see the `examples` folder, the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/), or the [BPX example repository](https://github.com/pybamm-team/bpx-example).
 
 Attributes of the class can be printed out using the standard Python dot notation, for example, you can print out the initial temperature of the cell using
 ```python
@@ -39,7 +46,7 @@ my_params_dict = my_params.dict(by_alias=True)
 print('Initial temperature of cell:', my_params_dict["Parameterisation"]["Cell"]["Initial temperature [K]"])
 ```
 
-The entire BPX object can be pretty printed using the `devtools` package 
+The entire BPX object can be pretty-printed using the `devtools` package 
 ```python
 from devtools import pprint
 pprint(my_params)

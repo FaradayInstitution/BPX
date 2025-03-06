@@ -1,7 +1,9 @@
 from warnings import warn
 
+from bpx import BPX
 
-def get_electrode_stoichiometries(target_soc, bpx):
+
+def get_electrode_stoichiometries(target_soc: float, bpx: BPX) -> tuple[float, float]:
     """
     Calculate individual electrode stoichiometries at a particular target
     state of charge, given stoichiometric limits defined by bpx
@@ -19,7 +21,10 @@ def get_electrode_stoichiometries(target_soc, bpx):
         The electrode stoichiometries that give the target state of charge
     """
     if target_soc < 0 or target_soc > 1:
-        warn("Target SOC should be between 0 and 1")
+        warn(
+            "Target SOC should be between 0 and 1",
+            stacklevel=2,
+        )
 
     sto_n_min = bpx.parameterisation.negative_electrode.minimum_stoichiometry
     sto_n_max = bpx.parameterisation.negative_electrode.maximum_stoichiometry
@@ -32,7 +37,7 @@ def get_electrode_stoichiometries(target_soc, bpx):
     return sto_n, sto_p
 
 
-def get_electrode_concentrations(target_soc, bpx):
+def get_electrode_concentrations(target_soc: float, bpx: BPX) -> tuple[float, float]:
     """
     Calculate individual electrode concentrations at a particular target
     state of charge, given stoichiometric limits and maximum concentrations
@@ -51,7 +56,10 @@ def get_electrode_concentrations(target_soc, bpx):
         The electrode concentrations that give the target state of charge
     """
     if target_soc < 0 or target_soc > 1:
-        warn("Target SOC should be between 0 and 1")
+        warn(
+            "Target SOC should be between 0 and 1",
+            stacklevel=2,
+        )
 
     c_n_max = bpx.parameterisation.negative_electrode.maximum_concentration
     c_p_max = bpx.parameterisation.positive_electrode.maximum_concentration
