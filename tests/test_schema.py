@@ -13,7 +13,7 @@ adapter = TypeAdapter(BPX)
 
 class TestSchema(unittest.TestCase):
     def setUp(self) -> None:
-        self.base : dict[str, Any] = {
+        self.base: dict[str, Any] = {
             "Header": {
                 "BPX": 1.0,
                 "Model": "DFN",
@@ -35,7 +35,9 @@ class TestSchema(unittest.TestCase):
                     "Initial concentration [mol.m-3]": 1000,
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
-                    "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
+                    "Diffusivity [m2.s-1]": (
+                        "8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"
+                    ),
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -273,12 +275,16 @@ class TestSchema(unittest.TestCase):
 
     def test_function_with_exp(self) -> None:
         test = copy.deepcopy(self.base)
-        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * exp(x) + 3"
+        test["Parameterisation"]["Electrolyte"][
+            "Conductivity [S.m-1]"
+        ] = "1.0 * exp(x) + 3"
         adapter.validate_python(test)
 
     def test_bad_function(self) -> None:
         test = copy.deepcopy(self.base)
-        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "this is not a function"
+        test["Parameterisation"]["Electrolyte"][
+            "Conductivity [S.m-1]"
+        ] = "this is not a function"
         with pytest.raises(ValidationError):
             adapter.validate_python(test)
 
@@ -368,10 +374,27 @@ class TestSchema(unittest.TestCase):
         }
         adapter.validate_python(test)
 
+    def test_user_defined_bad_table(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["User-defined"] = {
+            "a": {
+                "a": [1.0, 2.0],
+                "b": [2.3, 4.5],
+            },
+        }
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
+
     def test_user_defined_function(self) -> None:
         test = copy.deepcopy(self.base)
         test["Parameterisation"]["User-defined"] = {"a": "2.0 * x"}
         adapter.validate_python(test)
+
+    def test_user_defined_bad_function(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["User-defined"] = {"a": "this is not a function"}
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
 
     def test_bad_user_defined(self) -> None:
         test = copy.deepcopy(self.base)
