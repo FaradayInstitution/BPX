@@ -410,7 +410,7 @@ class Parameterisation(ExtraBaseModel):
     )
 
     _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
-        check_sto_limits
+        check_sto_limits,
     )
 
 
@@ -435,7 +435,7 @@ class ParameterisationSPM(ExtraBaseModel):
         alias="User-defined",
     )
     _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
-        check_sto_limits
+        check_sto_limits,
     )
 
 
@@ -449,7 +449,7 @@ class BPX(ExtraBaseModel):
         alias="Header",
     )
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
-        alias="Parameterisation"
+        alias="Parameterisation",
     )
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
