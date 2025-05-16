@@ -405,6 +405,68 @@ class TestSchema(unittest.TestCase):
         with pytest.raises(TypeError):
             adapter.validate_python(test)
 
+    def test_valid_nested_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Allow any arbitrary JSON as long as all the leaves are valid
+        # FloatFunctionTable
+        test["Parameterisation"]["User-defined"] = {
+            "My model 1": {
+                "Function 1": "2.0 * x",
+                "Parameter 1": 0.1,
+                "coefficients": {
+                    "x": [1.0, 2.0],
+                    "y": [2.3, 4.5],
+                },
+            },
+            "My model 2": {
+                "Function 1": "4.0 * x",
+                "Parameter 1": 0.5,
+                "coefficients": {
+                    "x": [10.0, 20.0],
+                    "y": [20.3, 40.5],
+                },
+            },
+        }
+        adapter.validate_python(test)
+
+    def test_invalid_nested_string_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Still don't allow non-function strings within the user-defined structure
+        test["Parameterisation"]["User-defined"] = {
+            "My model 2": {
+                "submodel": "Type 1",
+            },
+        }
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
+
+    def test_invalid_nested_table_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Still catch invalid tables under user-defined structure
+        test["Parameterisation"]["User-defined"] = {
+            "My model 2": {
+                "coefficients": {
+                    "a": [1.0, 2.0],
+                    "b": [2.3, 4.5],
+                },
+            },
+        }
+
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
+
+    def test_invalid_type_nested_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Still catch invalid tables under user-defined structure
+        test["Parameterisation"]["User-defined"] = {
+            "My model 2": {
+                "Is a good model": True,
+            },
+        }
+
+        with pytest.raises(TypeError, match="must be of type 'FloatFunctionTable'"):
+            adapter.validate_python(test)
+
 
 if __name__ == "__main__":
     unittest.main()

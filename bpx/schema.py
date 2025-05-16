@@ -3,7 +3,14 @@ from __future__ import annotations
 from typing import Literal, Union
 from warnings import warn
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator, root_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+    root_validator,
+)
 
 from bpx import Function, InterpolatedTable
 
@@ -322,20 +329,30 @@ class UserDefined(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def convert_and_validate(cls, values: dict) -> dict:
-        new_values = {}
-        for k, v in values.items():
-            # Convert to Function or InterpolatedTable
-            if isinstance(v, str):
-                new_values[k] = Function.validate(v)  # might raise ValueError
-            elif isinstance(v, dict):
-                new_values[k] = InterpolatedTable(**v)
-            elif isinstance(v, float):
-                new_values[k] = v
-            else:
-                error_msg = f"{k} must be of type 'FloatFunctionTable'"
-                raise TypeError(error_msg)
-        return new_values
+    def validate(cls, values: dict) -> dict:
+        def convert_and_validate(values: dict) -> dict:
+            new_values = {}
+            for k, v in values.items():
+                # Convert to Function or InterpolatedTable
+                if isinstance(v, str):
+                    new_values[k] = Function.validate(v)  # validate the string
+                elif isinstance(v, dict):
+                    try:
+                        new_values[k] = InterpolatedTable(**v)
+                    except ValidationError as e:
+                        # If it fails, check if the keys are lists (probably malformed table)
+                        if all(isinstance(val, list) for val in v.values()):
+                            raise e from e
+                        # otherwise assume nested data and recurse
+                        new_values[k] = convert_and_validate(v)
+                elif isinstance(v, float):
+                    new_values[k] = v
+                else:
+                    error_msg = f"{k} must be of type 'FloatFunctionTable'"
+                    raise TypeError(error_msg)
+            return new_values
+
+        return convert_and_validate(values)
 
 
 class Experiment(ExtraBaseModel):
@@ -391,6 +408,7 @@ class Parameterisation(ExtraBaseModel):
         None,
         alias="User-defined",
     )
+
     _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
         check_sto_limits
     )
