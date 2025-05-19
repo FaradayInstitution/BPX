@@ -1,9 +1,16 @@
 from __future__ import annotations
 
-from typing import Literal, Union, get_args
+from typing import Literal, Optional, Union
 from warnings import warn
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator, root_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+    root_validator,
+)
 
 from bpx import Function, InterpolatedTable
 
@@ -89,7 +96,9 @@ class Cell(ExtraBaseModel):
     )
     nominal_cell_capacity: float = Field(
         alias="Nominal cell capacity [A.h]",
-        description=("Nominal cell capacity. " "Used to convert between current and C-rate."),
+        description=(
+            "Nominal cell capacity. " "Used to convert between current and C-rate."
+        ),
         examples=[5.0],
     )
     ambient_temperature: float = Field(
@@ -145,7 +154,10 @@ class Electrolyte(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
-        description=("Lithium ion diffusivity in electrolyte (constant or function " "of concentration)"),
+        description=(
+            "Lithium ion diffusivity in electrolyte (constant or function "
+            "of concentration)"
+        ),
     )
     diffusivity_activation_energy: float = Field(
         None,
@@ -156,7 +168,9 @@ class Electrolyte(ExtraBaseModel):
     conductivity: FloatFunctionTable = Field(
         alias="Conductivity [S.m-1]",
         examples=[1.0],
-        description=("Electrolyte conductivity (constant or function of concentration)"),
+        description=(
+            "Electrolyte conductivity (constant or function of concentration)"
+        ),
     )
     conductivity_activation_energy: float = Field(
         None,
@@ -228,7 +242,10 @@ class Particle(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["3.3e-14"],
-        description=("Lithium ion diffusivity in particle (constant or function " "of stoichiometry)"),
+        description=(
+            "Lithium ion diffusivity in particle (constant or function "
+            "of stoichiometry)"
+        ),
     )
     diffusivity_activation_energy: float = Field(
         None,
@@ -240,7 +257,8 @@ class Particle(ExtraBaseModel):
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
         description=(
-            "Open-circuit potential (OCP) at the reference temperature, " "function of particle stoichiometry"
+            "Open-circuit potential (OCP) at the reference temperature, "
+            "function of particle stoichiometry"
         ),
     )
     dudt: FloatFunctionTable = Field(
@@ -270,7 +288,9 @@ class Electrode(Contact):
     conductivity: float = Field(
         alias="Conductivity [S.m-1]",
         examples=[0.18],
-        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
+        description=(
+            "Effective electronic conductivity of the porous electrode matrix (constant)"
+        ),
     )
 
 
@@ -307,26 +327,36 @@ class ElectrodeBlendedSPM(ContactBase):
 class UserDefined(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    def __init__(self, **data: dict) -> None:
-        """
-        Overwrite the default __init__ to convert strings to Function objects and
-        dicts to InterpolatedTable objects
-        """
-        for k, v in data.items():
-            if isinstance(v, str):
-                data[k] = Function(v)
-            elif isinstance(v, dict):
-                data[k] = InterpolatedTable(**v)
-        super().__init__(**data)
+    description: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
-    def validate_extra_fields(cls, values: dict) -> dict:
-        for k, v in values.items():
-            if not isinstance(v, get_args(FloatFunctionTable)):
-                error_msg = f"{k} must be of type 'FloatFunctionTable'"
-                raise TypeError(error_msg)
-        return values
+    def validate(cls, values: dict) -> dict:
+        def convert_and_validate(values: dict) -> dict:
+            new_values = {}
+            for k, v in values.items():
+                # Convert to Function or InterpolatedTable
+                if k == "description":
+                    new_values[k] = v
+                elif isinstance(v, str):
+                    new_values[k] = Function.validate(v)  # validate the string
+                elif isinstance(v, dict):
+                    try:
+                        new_values[k] = InterpolatedTable(**v)
+                    except ValidationError as e:
+                        # If it fails, check if the keys are lists (probably malformed table)
+                        if all(isinstance(val, list) for val in v.values()):
+                            raise e from e
+                        # otherwise assume nested data and recurse
+                        new_values[k] = convert_and_validate(v)
+                elif isinstance(v, float):
+                    new_values[k] = v
+                else:
+                    error_msg = f"{k} must be of type 'FloatFunctionTable'"
+                    raise TypeError(error_msg)
+            return new_values
+
+        return convert_and_validate(values)
 
 
 class Experiment(ExtraBaseModel):
@@ -382,7 +412,10 @@ class Parameterisation(ExtraBaseModel):
         None,
         alias="User-defined",
     )
-    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(check_sto_limits)
+
+    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
+        check_sto_limits,
+    )
 
 
 class ParameterisationSPM(ExtraBaseModel):
@@ -405,7 +438,9 @@ class ParameterisationSPM(ExtraBaseModel):
         None,
         alias="User-defined",
     )
-    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(check_sto_limits)
+    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
+        check_sto_limits,
+    )
 
 
 class BPX(ExtraBaseModel):
@@ -417,7 +452,9 @@ class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+        alias="Parameterisation",
+    )
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
     @root_validator(skip_on_failure=True)
