@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 from warnings import warn
 
 from pydantic import (
@@ -327,6 +327,8 @@ class ElectrodeBlendedSPM(ContactBase):
 class UserDefined(BaseModel):
     model_config = ConfigDict(extra="allow")
 
+    description: Optional[str] = None
+
     @model_validator(mode="before")
     @classmethod
     def validate(cls, values: dict) -> dict:
@@ -334,7 +336,9 @@ class UserDefined(BaseModel):
             new_values = {}
             for k, v in values.items():
                 # Convert to Function or InterpolatedTable
-                if isinstance(v, str):
+                if k == "description":
+                    new_values[k] = v
+                elif isinstance(v, str):
                     new_values[k] = Function.validate(v)  # validate the string
                 elif isinstance(v, dict):
                     try:

@@ -47,7 +47,7 @@ class Function(str):
         try:
             cls.parser.parse_string(v)
         except ExpressionParser.ParseException as e:
-            raise ValueError(str(e)) from e
+            raise ValueError("Invalid Function: " + str(e)) from e
         return cls(v)
 
     @classmethod
@@ -85,7 +85,10 @@ class Function(str):
         function_body = f"  return {self}"
         source_code = preamble + function_def + function_body
 
-        with tempfile.NamedTemporaryFile(suffix=f"{function_name}.py", delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(
+            suffix=f"{function_name}.py",
+            delete=False,
+        ) as tmp:
             tmp.write(source_code.encode())
             tmp.flush()
             spec = util.spec_from_file_location("tmp", tmp.name)

@@ -410,6 +410,7 @@ class TestSchema(unittest.TestCase):
         # Allow any arbitrary JSON as long as all the leaves are valid
         # FloatFunctionTable
         test["Parameterisation"]["User-defined"] = {
+            "description": "My model",
             "My model 1": {
                 "Function 1": "2.0 * x",
                 "Parameter 1": 0.1,
@@ -437,7 +438,7 @@ class TestSchema(unittest.TestCase):
                 "submodel": "Type 1",
             },
         }
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="Invalid Function: "):
             adapter.validate_python(test)
 
     def test_invalid_nested_table_user_defined(self) -> None:
@@ -477,6 +478,16 @@ class TestSchema(unittest.TestCase):
         }
 
         with pytest.raises(ValidationError, match="Keys should be strings"):
+            adapter.validate_python(test)
+
+    def test_invalid_description_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Don't allow non-string keys in user-defined
+        test["Parameterisation"]["User-defined"] = {
+            "description": 5.0,
+        }
+
+        with pytest.raises(ValidationError, match="Input should be a valid string"):
             adapter.validate_python(test)
 
 
