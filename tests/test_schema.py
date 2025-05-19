@@ -431,7 +431,7 @@ class TestSchema(unittest.TestCase):
 
     def test_invalid_nested_string_user_defined(self) -> None:
         test = copy.deepcopy(self.base)
-        # Still don't allow non-function strings within the user-defined structure
+        # Don't allow non-function strings within the user-defined structure
         test["Parameterisation"]["User-defined"] = {
             "My model 2": {
                 "submodel": "Type 1",
@@ -442,7 +442,7 @@ class TestSchema(unittest.TestCase):
 
     def test_invalid_nested_table_user_defined(self) -> None:
         test = copy.deepcopy(self.base)
-        # Still catch invalid tables under user-defined structure
+        # Catch invalid tables under user-defined structure
         test["Parameterisation"]["User-defined"] = {
             "My model 2": {
                 "coefficients": {
@@ -452,12 +452,12 @@ class TestSchema(unittest.TestCase):
             },
         }
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="Field required"):
             adapter.validate_python(test)
 
     def test_invalid_type_nested_user_defined(self) -> None:
         test = copy.deepcopy(self.base)
-        # Still catch invalid tables under user-defined structure
+        # Don't allow other leaf types within the user-defined structure
         test["Parameterisation"]["User-defined"] = {
             "My model 2": {
                 "Is a good model": True,
@@ -465,6 +465,18 @@ class TestSchema(unittest.TestCase):
         }
 
         with pytest.raises(TypeError, match="must be of type 'FloatFunctionTable'"):
+            adapter.validate_python(test)
+
+    def test_invalid_key_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Don't allow non-string keys in user-defined
+        test["Parameterisation"]["User-defined"] = {
+            4: {
+                "Function 1": "2.0 * x",
+            },
+        }
+
+        with pytest.raises(ValidationError, match="Keys should be strings"):
             adapter.validate_python(test)
 
 
