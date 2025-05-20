@@ -389,8 +389,7 @@ class Parameterisation(ExtraBaseModel):
 
     @model_validator(mode="after")
     def _sto_limit_validation(self) -> Parameterisation:
-        check_sto_limits(self, self.__dict__)
-        return self
+        return check_sto_limits(self)
 
 
 class ParameterisationSPM(ExtraBaseModel):
@@ -423,8 +422,7 @@ class ParameterisationSPM(ExtraBaseModel):
 
     @model_validator(mode="after")
     def _sto_limit_validation(self) -> ParameterisationSPM:
-        check_sto_limits(self, self.__dict__)
-        return self
+        return check_sto_limits(self)
 
 
 class BPX(ExtraBaseModel):
