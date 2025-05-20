@@ -441,10 +441,9 @@ class BPX(ExtraBaseModel):
     @classmethod
     def _dispatch_param_subclasses(cls, data: Any) -> Any:  # noqa:ANN401
         if isinstance(data, dict):
-            model_type = data.get("Header").get("Model")
-            if model_type is None:
-                error_msg = "Missing 'model' field in Header; cannot choose Parameterisation class"
-                raise ValueError(error_msg)
+            # validate header first, checks that the model type is valid
+            header = Header.model_validate(data.get("Header"))
+            model_type = header.model
 
             if model_type == "SPM":
                 try:
@@ -467,5 +466,7 @@ class BPX(ExtraBaseModel):
                     except ValidationError:
                         raise e from None
 
+            # return validated data to stop double validation
+            data["Header"] = header
             data["Parameterisation"] = parameterisation
         return data

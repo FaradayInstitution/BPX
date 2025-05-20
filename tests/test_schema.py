@@ -214,10 +214,16 @@ class TestSchema(unittest.TestCase):
         test = copy.deepcopy(self.base_spm)
         adapter.validate_python(test)
 
+    def test_missing_model(self) -> None:
+        test = copy.deepcopy(self.base)
+        del test["Header"]["Model"]
+        with pytest.raises(ValidationError, match=re.escape("Model\n  Field required")):
+            adapter.validate_python(test)
+
     def test_bad_model(self) -> None:
         test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "Wrong model type"
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="Input should be 'SPM', 'SPMe' or 'DFN'"):
             adapter.validate_python(test)
 
     def test_bad_dfn(self) -> None:
@@ -311,6 +317,7 @@ class TestSchema(unittest.TestCase):
                 "Temperature [K]": [298.15, 298.15],
             },
         }
+        adapter.validate_python(test)
 
     def test_check_sto_limits_validator(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
