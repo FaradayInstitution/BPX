@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Literal, Union, get_args
 from warnings import warn
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator, root_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from bpx import Function, InterpolatedTable
 
@@ -89,7 +89,7 @@ class Cell(ExtraBaseModel):
     )
     nominal_cell_capacity: float = Field(
         alias="Nominal cell capacity [A.h]",
-        description=("Nominal cell capacity. " "Used to convert between current and C-rate."),
+        description=("Nominal cell capacity. Used to convert between current and C-rate."),
         examples=[5.0],
     )
     ambient_temperature: float = Field(
@@ -145,7 +145,7 @@ class Electrolyte(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
-        description=("Lithium ion diffusivity in electrolyte (constant or function " "of concentration)"),
+        description=("Lithium ion diffusivity in electrolyte (constant or function of concentration)"),
     )
     diffusivity_activation_energy: float = Field(
         None,
@@ -228,7 +228,7 @@ class Particle(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["3.3e-14"],
-        description=("Lithium ion diffusivity in particle (constant or function " "of stoichiometry)"),
+        description=("Lithium ion diffusivity in particle (constant or function of stoichiometry)"),
     )
     diffusivity_activation_energy: float = Field(
         None,
@@ -239,9 +239,7 @@ class Particle(ExtraBaseModel):
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
-        description=(
-            "Open-circuit potential (OCP) at the reference temperature, " "function of particle stoichiometry"
-        ),
+        description=("Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"),
     )
     dudt: FloatFunctionTable = Field(
         None,
@@ -382,7 +380,11 @@ class Parameterisation(ExtraBaseModel):
         None,
         alias="User-defined",
     )
-    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(check_sto_limits)
+
+    @model_validator(mode="after")
+    def _sto_limit_validation(self) -> Parameterisation:
+        check_sto_limits(self, self.__dict__)
+        return self
 
 
 class ParameterisationSPM(ExtraBaseModel):
@@ -405,7 +407,11 @@ class ParameterisationSPM(ExtraBaseModel):
         None,
         alias="User-defined",
     )
-    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(check_sto_limits)
+
+    @model_validator(mode="after")
+    def _sto_limit_validation(self) -> ParameterisationSPM:
+        check_sto_limits(self, self.__dict__)
+        return self
 
 
 class BPX(ExtraBaseModel):
@@ -420,11 +426,10 @@ class BPX(ExtraBaseModel):
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
-    @root_validator(skip_on_failure=True)
-    @classmethod
-    def model_based_validation(cls, values: dict) -> dict:
-        model = values.get("header").model
-        parameter_class_name = values.get("parameterisation").__class__.__name__
+    @model_validator(mode="after")
+    def model_based_validation(self) -> BPX:
+        model = self.header.model
+        parameter_class_name = self.parameterisation.__class__.__name__
         allowed_combinations = [
             ("Parameterisation", "DFN"),
             ("Parameterisation", "SPMe"),
@@ -435,4 +440,4 @@ class BPX(ExtraBaseModel):
                 f"The model type {model} does not correspond to the parameter set",
                 stacklevel=2,
             )
-        return values
+        return self
