@@ -13,7 +13,7 @@ adapter = TypeAdapter(BPX)
 
 class TestSchema(unittest.TestCase):
     def setUp(self) -> None:
-        self.base : dict[str, Any] = {
+        self.base: dict[str, Any] = {
             "Header": {
                 "BPX": 1.0,
                 "Model": "DFN",
@@ -323,7 +323,7 @@ class TestSchema(unittest.TestCase):
     def test_check_sto_limits_validator_high_voltage(self) -> None:
         test = copy.deepcopy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.0
-        with pytest.warns(UserWarning):
+        with pytest.warns(UserWarning, match="maximum voltage computed from the STO limits"):
             adapter.validate_python(test)
 
     def test_check_sto_limits_validator_high_voltage_tolerance(self) -> None:
@@ -335,8 +335,9 @@ class TestSchema(unittest.TestCase):
 
     def test_check_sto_limits_validator_low_voltage(self) -> None:
         test = copy.deepcopy(self.base_non_blended)
+        test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 3.0
-        with pytest.warns(UserWarning):
+        with pytest.warns(UserWarning, match="minimum voltage computed from the STO limits"):
             adapter.validate_python(test)
 
     def test_check_sto_limits_validator_low_voltage_tolerance(self) -> None:
