@@ -445,26 +445,22 @@ class BPX(ExtraBaseModel):
             header = Header.model_validate(data.get("Header"))
             model_type = header.model
 
+            # Choose the expected class based on model type
             if model_type == "SPM":
-                try:
-                    parameterisation = ParameterisationSPM.model_validate(data["Parameterisation"])
-                except ValidationError as e:
-                    try:
-                        parameterisation = Parameterisation.model_validate(data["Parameterisation"])
-                        error_msg = f"Valid parameter set does not correspond with the model type {model_type}"
-                        raise ValueError(error_msg) from e
-                    except ValidationError:
-                        raise e from None
+                expected_cls, fallback_cls = ParameterisationSPM, Parameterisation
+                error_msg = f"Valid parameter set does not correspond with the model type {model_type}"
             else:
+                expected_cls, fallback_cls = Parameterisation, ParameterisationSPM
+                error_msg = f"Valid SPM parameter set does not correspond with the model type {model_type}"
+
+            try:
+                parameterisation = expected_cls.model_validate(data["Parameterisation"])
+            except ValidationError as e:
                 try:
-                    parameterisation = Parameterisation.model_validate(data["Parameterisation"])
-                except ValidationError as e:
-                    try:
-                        parameterisation = ParameterisationSPM.model_validate(data["Parameterisation"])
-                        error_msg = f"Valid SPM parameter set does not correspond with the model type {model_type}"
-                        raise ValueError(error_msg) from e
-                    except ValidationError:
-                        raise e from None
+                    fallback_cls.model_validate(data["Parameterisation"])
+                    raise ValueError(error_msg) from e
+                except ValidationError:
+                    raise e from None
 
             # return validated data to stop double validation
             data["Header"] = header
