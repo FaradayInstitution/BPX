@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal, Union, get_args
-from warnings import warn
+from typing import Any, Literal, Union, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from bpx import Function, InterpolatedTable
 
@@ -381,10 +380,16 @@ class Parameterisation(ExtraBaseModel):
         alias="User-defined",
     )
 
+    @field_validator("negative_electrode", "positive_electrode", mode="before")
+    @classmethod
+    def _choose_electrode_type(cls, data: dict) -> dict:
+        if data.get("Particle"):
+            return ElectrodeBlended.model_validate(data)
+        return ElectrodeSingle.model_validate(data)
+
     @model_validator(mode="after")
     def _sto_limit_validation(self) -> Parameterisation:
-        check_sto_limits(self, self.__dict__)
-        return self
+        return check_sto_limits(self)
 
 
 class ParameterisationSPM(ExtraBaseModel):
@@ -408,10 +413,16 @@ class ParameterisationSPM(ExtraBaseModel):
         alias="User-defined",
     )
 
+    @field_validator("negative_electrode", "positive_electrode", mode="before")
+    @classmethod
+    def _choose_electrode_type(cls, data: dict) -> dict:
+        if data.get("Particle"):
+            return ElectrodeBlendedSPM.model_validate(data)
+        return ElectrodeSingleSPM.model_validate(data)
+
     @model_validator(mode="after")
     def _sto_limit_validation(self) -> ParameterisationSPM:
-        check_sto_limits(self, self.__dict__)
-        return self
+        return check_sto_limits(self)
 
 
 class BPX(ExtraBaseModel):
@@ -426,18 +437,32 @@ class BPX(ExtraBaseModel):
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
-    @model_validator(mode="after")
-    def model_based_validation(self) -> BPX:
-        model = self.header.model
-        parameter_class_name = self.parameterisation.__class__.__name__
-        allowed_combinations = [
-            ("Parameterisation", "DFN"),
-            ("Parameterisation", "SPMe"),
-            ("ParameterisationSPM", "SPM"),
-        ]
-        if (parameter_class_name, model) not in allowed_combinations:
-            warn(
-                f"The model type {model} does not correspond to the parameter set",
-                stacklevel=2,
-            )
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def _dispatch_param_subclasses(cls, data: Any) -> Any:  # noqa:ANN401
+        if isinstance(data, dict):
+            # validate header first, checks that the model type is valid
+            header = Header.model_validate(data.get("Header"))
+            model_type = header.model
+
+            # Choose the expected class based on model type
+            if model_type == "SPM":
+                expected_cls, fallback_cls = ParameterisationSPM, Parameterisation
+                error_msg = f"Valid parameter set does not correspond with the model type {model_type}"
+            else:
+                expected_cls, fallback_cls = Parameterisation, ParameterisationSPM
+                error_msg = f"Valid SPM parameter set does not correspond with the model type {model_type}"
+
+            try:
+                parameterisation = expected_cls.model_validate(data["Parameterisation"])
+            except ValidationError as e:
+                try:
+                    fallback_cls.model_validate(data["Parameterisation"])
+                    raise ValueError(error_msg) from e
+                except ValidationError:
+                    raise e from None
+
+            # return validated data to stop double validation
+            data["Header"] = header
+            data["Parameterisation"] = parameterisation
+        return data

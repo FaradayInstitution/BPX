@@ -1,4 +1,5 @@
 import copy
+import re
 import unittest
 import warnings
 from typing import Any
@@ -213,37 +214,34 @@ class TestSchema(unittest.TestCase):
         test = copy.deepcopy(self.base_spm)
         adapter.validate_python(test)
 
+    def test_missing_model(self) -> None:
+        test = copy.deepcopy(self.base)
+        del test["Header"]["Model"]
+        with pytest.raises(ValidationError, match=re.escape("Model\n  Field required")):
+            adapter.validate_python(test)
+
     def test_bad_model(self) -> None:
         test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "Wrong model type"
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="Input should be 'SPM', 'SPMe' or 'DFN'"):
             adapter.validate_python(test)
 
     def test_bad_dfn(self) -> None:
         test = copy.deepcopy(self.base_spm)
         test["Header"]["Model"] = "DFN"
-        with pytest.warns(
-            UserWarning,
-            match="The model type DFN does not correspond to the parameter set",
-        ):
+        with pytest.raises(ValueError, match="Valid SPM parameter set does not correspond with"):
             adapter.validate_python(test)
 
     def test_bad_spme(self) -> None:
         test = copy.deepcopy(self.base_spm)
         test["Header"]["Model"] = "SPMe"
-        with pytest.warns(
-            UserWarning,
-            match="The model type SPMe does not correspond to the parameter set",
-        ):
+        with pytest.raises(ValueError, match="Valid SPM parameter set does not correspond with"):
             adapter.validate_python(test)
 
     def test_bad_spm(self) -> None:
         test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "SPM"
-        with pytest.warns(
-            UserWarning,
-            match="The model type SPM does not correspond to the parameter set",
-        ):
+        with pytest.raises(ValueError, match="Valid parameter set does not correspond with"):
             adapter.validate_python(test)
 
     def test_table(self) -> None:
@@ -293,8 +291,15 @@ class TestSchema(unittest.TestCase):
     def test_bad_input(self) -> None:
         test = copy.deepcopy(self.base)
         test["Parameterisation"]["Electrolyte"]["bad"] = "this shouldn't be here"
-        with pytest.raises(ValidationError):
+        with pytest.raises(
+            ValidationError,
+            match=re.escape("Electrolyte.bad\n  Extra inputs are not permitted"),
+        ) as excinfo:
             adapter.validate_python(test)
+
+        # checks that only the relevent error is raised, not a cascade of unreleated errors
+        errors = excinfo.value.errors()
+        assert len(errors) == 1, f"Expected 1 error, got {len(errors)}: {errors}"
 
     def test_validation_data(self) -> None:
         test = copy.deepcopy(self.base)
@@ -312,6 +317,7 @@ class TestSchema(unittest.TestCase):
                 "Temperature [K]": [298.15, 298.15],
             },
         }
+        adapter.validate_python(test)
 
     def test_check_sto_limits_validator(self) -> None:
         warnings.filterwarnings("error")  # Treat warnings as errors
