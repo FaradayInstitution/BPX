@@ -23,6 +23,7 @@ class Header(ExtraBaseModel):
         alias="BPX",
         examples=["1.0.0"],
         description="BPX format version",
+        # Update this pattern to make the patch number required once the deprecation warning is removed
         pattern=r"^\d+\.\d+(?:\.\d+)?$",
     )
     title: str = Field(
