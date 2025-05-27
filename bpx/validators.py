@@ -3,7 +3,7 @@ from warnings import warn
 from .base_extra_model import ExtraBaseModel
 
 
-def check_sto_limits(cls: ExtraBaseModel, values: dict) -> dict:
+def check_sto_limits(param: ExtraBaseModel) -> ExtraBaseModel:
     """
     Validates that the STO limits subbed into the OCPs give the correct voltage limits.
     Works if both OCPs are defined as functions.
@@ -12,21 +12,21 @@ def check_sto_limits(cls: ExtraBaseModel, values: dict) -> dict:
     """
 
     try:
-        ocp_n = values.get("negative_electrode").ocp.to_python_function()
-        ocp_p = values.get("positive_electrode").ocp.to_python_function()
+        ocp_n = param.negative_electrode.ocp.to_python_function()
+        ocp_p = param.positive_electrode.ocp.to_python_function()
     except AttributeError:
         # OCPs defined as interpolated tables or one of the electrodes is blended; do nothing
-        return values
+        return param
 
-    sto_n_min = values.get("negative_electrode").minimum_stoichiometry
-    sto_n_max = values.get("negative_electrode").maximum_stoichiometry
-    sto_p_min = values.get("positive_electrode").minimum_stoichiometry
-    sto_p_max = values.get("positive_electrode").maximum_stoichiometry
-    v_min = values.get("cell").lower_voltage_cutoff
-    v_max = values.get("cell").upper_voltage_cutoff
+    sto_n_min = param.negative_electrode.minimum_stoichiometry
+    sto_n_max = param.negative_electrode.maximum_stoichiometry
+    sto_p_min = param.positive_electrode.minimum_stoichiometry
+    sto_p_max = param.positive_electrode.maximum_stoichiometry
+    v_min = param.cell.lower_voltage_cutoff
+    v_max = param.cell.upper_voltage_cutoff
 
     # Voltage tolerance from `settings` data class
-    tol = cls.Settings.tolerances["Voltage [V]"]
+    tol = param.Settings.tolerances["Voltage [V]"]
 
     # Checks the maximum voltage estimated from STO
     v_max_sto = ocp_p(sto_p_min) - ocp_n(sto_n_max)
@@ -48,5 +48,4 @@ def check_sto_limits(cls: ExtraBaseModel, values: dict) -> dict:
             stacklevel=2,
         )
 
-    return values
-
+    return param

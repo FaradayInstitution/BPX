@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal, Optional, Union
-from warnings import warn
+from typing import Any, Literal, Optional, Union
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    ValidationError,
-    model_validator,
-    root_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from bpx import Function, InterpolatedTable
 
@@ -96,9 +88,7 @@ class Cell(ExtraBaseModel):
     )
     nominal_cell_capacity: float = Field(
         alias="Nominal cell capacity [A.h]",
-        description=(
-            "Nominal cell capacity. " "Used to convert between current and C-rate."
-        ),
+        description=("Nominal cell capacity. Used to convert between current and C-rate."),
         examples=[5.0],
     )
     ambient_temperature: float = Field(
@@ -154,10 +144,7 @@ class Electrolyte(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
-        description=(
-            "Lithium ion diffusivity in electrolyte (constant or function "
-            "of concentration)"
-        ),
+        description=("Lithium ion diffusivity in electrolyte (constant or function of concentration)"),
     )
     diffusivity_activation_energy: float = Field(
         None,
@@ -168,9 +155,7 @@ class Electrolyte(ExtraBaseModel):
     conductivity: FloatFunctionTable = Field(
         alias="Conductivity [S.m-1]",
         examples=[1.0],
-        description=(
-            "Electrolyte conductivity (constant or function of concentration)"
-        ),
+        description=("Electrolyte conductivity (constant or function of concentration)"),
     )
     conductivity_activation_energy: float = Field(
         None,
@@ -242,10 +227,7 @@ class Particle(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["3.3e-14"],
-        description=(
-            "Lithium ion diffusivity in particle (constant or function "
-            "of stoichiometry)"
-        ),
+        description=("Lithium ion diffusivity in particle (constant or function of stoichiometry)"),
     )
     diffusivity_activation_energy: float = Field(
         None,
@@ -256,10 +238,7 @@ class Particle(ExtraBaseModel):
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
-        description=(
-            "Open-circuit potential (OCP) at the reference temperature, "
-            "function of particle stoichiometry"
-        ),
+        description=("Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"),
     )
     dudt: FloatFunctionTable = Field(
         None,
@@ -288,9 +267,7 @@ class Electrode(Contact):
     conductivity: float = Field(
         alias="Conductivity [S.m-1]",
         examples=[0.18],
-        description=(
-            "Effective electronic conductivity of the porous electrode matrix (constant)"
-        ),
+        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
     )
 
 
@@ -413,9 +390,16 @@ class Parameterisation(ExtraBaseModel):
         alias="User-defined",
     )
 
-    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
-        check_sto_limits,
-    )
+    @field_validator("negative_electrode", "positive_electrode", mode="before")
+    @classmethod
+    def _choose_electrode_type(cls, data: dict) -> dict:
+        if data.get("Particle"):
+            return ElectrodeBlended.model_validate(data)
+        return ElectrodeSingle.model_validate(data)
+
+    @model_validator(mode="after")
+    def _sto_limit_validation(self) -> Parameterisation:
+        return check_sto_limits(self)
 
 
 class ParameterisationSPM(ExtraBaseModel):
@@ -438,9 +422,17 @@ class ParameterisationSPM(ExtraBaseModel):
         None,
         alias="User-defined",
     )
-    _sto_limit_validation = root_validator(skip_on_failure=True, allow_reuse=True)(
-        check_sto_limits,
-    )
+
+    @field_validator("negative_electrode", "positive_electrode", mode="before")
+    @classmethod
+    def _choose_electrode_type(cls, data: dict) -> dict:
+        if data.get("Particle"):
+            return ElectrodeBlendedSPM.model_validate(data)
+        return ElectrodeSingleSPM.model_validate(data)
+
+    @model_validator(mode="after")
+    def _sto_limit_validation(self) -> ParameterisationSPM:
+        return check_sto_limits(self)
 
 
 class BPX(ExtraBaseModel):
@@ -457,19 +449,32 @@ class BPX(ExtraBaseModel):
     )
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode="before")
     @classmethod
-    def model_based_validation(cls, values: dict) -> dict:
-        model = values.get("header").model
-        parameter_class_name = values.get("parameterisation").__class__.__name__
-        allowed_combinations = [
-            ("Parameterisation", "DFN"),
-            ("Parameterisation", "SPMe"),
-            ("ParameterisationSPM", "SPM"),
-        ]
-        if (parameter_class_name, model) not in allowed_combinations:
-            warn(
-                f"The model type {model} does not correspond to the parameter set",
-                stacklevel=2,
-            )
-        return values
+    def _dispatch_param_subclasses(cls, data: Any) -> Any:  # noqa:ANN401
+        if isinstance(data, dict):
+            # validate header first, checks that the model type is valid
+            header = Header.model_validate(data.get("Header"))
+            model_type = header.model
+
+            # Choose the expected class based on model type
+            if model_type == "SPM":
+                expected_cls, fallback_cls = ParameterisationSPM, Parameterisation
+                error_msg = f"Valid parameter set does not correspond with the model type {model_type}"
+            else:
+                expected_cls, fallback_cls = Parameterisation, ParameterisationSPM
+                error_msg = f"Valid SPM parameter set does not correspond with the model type {model_type}"
+
+            try:
+                parameterisation = expected_cls.model_validate(data["Parameterisation"])
+            except ValidationError as e:
+                try:
+                    fallback_cls.model_validate(data["Parameterisation"])
+                    raise ValueError(error_msg) from e
+                except ValidationError:
+                    raise e from None
+
+            # return validated data to stop double validation
+            data["Header"] = header
+            data["Parameterisation"] = parameterisation
+        return data
