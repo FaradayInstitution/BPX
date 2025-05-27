@@ -1,6 +1,6 @@
 {
       "Header": {
-            "BPX": 0.1,
+            "BPX": "0.1.0",
             "Title": "Parameterisation example of an LFP|graphite 2 Ah cylindrical 18650 cell.",
             "Description": "LFP|graphite 2 Ah cylindrical 18650 cell. Parameterisation by About:Energy Limited (aboutenergy.io), December 2022, based on cell cycling data, and electrode data gathered after cell teardown. Electrolyte properties from Nyman et al. 2008 (doi:10.1016/j.electacta.2008.04.023). Negative electrode entropic coefficient data are from O'Regan et al. 2022 (doi:10.1016/j.electacta.2022.140700). Positive electrode entropic coefficient data are from Gerver and Meyers 2011 (doi:10.1149/1.3591799). Other thermal properties are estimated.",
             "Model": "DFN"
