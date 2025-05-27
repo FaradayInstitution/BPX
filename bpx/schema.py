@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import Any, Literal, Union, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
@@ -18,10 +19,11 @@ class Header(ExtraBaseModel):
     title, description).
     """
 
-    bpx: float = Field(
+    bpx: str = Field(
         alias="BPX",
-        examples=[1.0],
+        examples=["1.0.0"],
         description="BPX format version",
+        pattern=r"^\d+\.\d+(?:\.\d+)?$",
     )
     title: str = Field(
         None,
@@ -46,6 +48,24 @@ class Header(ExtraBaseModel):
         examples=["DFN"],
         description=('Model type ("SPM", "SPMe", "DFN")'),
     )
+
+    @field_validator("bpx", mode="before")
+    @classmethod
+    def _validate_bpx_version(cls, value: str | float) -> str:
+        """
+        Warns users with old files that 'bpx' should now be a string.
+        Temporarily converts float to string for compatibility.
+        """
+        if isinstance(value, float):
+            value = f"{value:.1f}"
+            warnings.warn(
+                "The 'bpx' field now expects the BPX semantic version as a string (e.g. '0.5.0'), not a float. "
+                "This format is temporarily supported but will be removed in a future version. "
+                "Please update your file accordingly.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return value
 
 
 class Cell(ExtraBaseModel):

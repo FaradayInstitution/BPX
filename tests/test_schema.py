@@ -16,7 +16,7 @@ class TestSchema(unittest.TestCase):
     def setUp(self) -> None:
         self.base: dict[str, Any] = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "DFN",
             },
             "Parameterisation": {
@@ -91,7 +91,7 @@ class TestSchema(unittest.TestCase):
         # SPM parameter set
         self.base_spm = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -149,7 +149,7 @@ class TestSchema(unittest.TestCase):
         # Non-blended electrodes
         self.base_non_blended = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -387,6 +387,18 @@ class TestSchema(unittest.TestCase):
             "bad": True,
         }
         with pytest.raises(TypeError):
+            adapter.validate_python(test)
+
+    def test_deprecated_bpx_version(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Header"]["BPX"] = 0.4
+        with pytest.warns(DeprecationWarning, match="The 'bpx' field now expects the BPX semantic version as a string"):
+            adapter.validate_python(test)
+
+    def test_bad_bpx_version(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Header"]["BPX"] = "1.2.3.4"  # Invalid version format
+        with pytest.raises(ValidationError, match="String should match pattern"):
             adapter.validate_python(test)
 
 
