@@ -9,7 +9,7 @@ from bpx import Function, InterpolatedTable
 from .base_extra_model import ExtraBaseModel
 from .validators import check_sto_limits
 
-FloatFunctionTable = Union[float, Function, InterpolatedTable]
+FloatFunctionTable = Union[float, int, Function, InterpolatedTable]
 
 
 class Header(ExtraBaseModel):
@@ -320,7 +320,8 @@ class UserDefined(BaseModel):
     @classmethod
     def validate_extra_fields(cls, values: dict) -> dict:
         for k, v in values.items():
-            if not isinstance(v, get_args(FloatFunctionTable)):
+            # bool is a subclass of int (isinstance(True, int) == True) so we need to check for it separately
+            if not isinstance(v, get_args(FloatFunctionTable)) or isinstance(v, bool):
                 error_msg = f"{k} must be of type 'FloatFunctionTable'"
                 raise TypeError(error_msg)
         return values
