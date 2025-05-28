@@ -435,13 +435,16 @@ class TestSchema(unittest.TestCase):
             "My model 2": {
                 "Function 1": "4.0 * x",
                 "Parameter 1": 0.5,
+                "Parameter 2": 2,
                 "coefficients": {
                     "x": [10.0, 20.0],
                     "y": [20.3, 40.5],
                 },
             },
         }
-        adapter.validate_python(test)
+        obj = adapter.validate_python(test)
+
+        assert obj.model_dump(by_alias=True)["Parameterisation"]["User-defined"]["My model 2"]["Parameter 2"] == 2
 
     def test_invalid_nested_string_user_defined(self) -> None:
         test = copy.deepcopy(self.base)

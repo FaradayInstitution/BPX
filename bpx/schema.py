@@ -342,12 +342,12 @@ class UserDefined(BaseModel):
                     try:
                         new_values[k] = InterpolatedTable(**v)
                     except ValidationError as e:
-                        # If it fails, check if the keys are lists (probably malformed table)
+                        # If it fails, check if all the values are lists (probably malformed table)
                         if all(isinstance(val, list) for val in v.values()):
                             raise e from e
                         # otherwise assume nested data and recurse
                         new_values[k] = convert_and_validate(v)
-                elif isinstance(v, float):
+                elif isinstance(v, (float, int)) and not isinstance(v, bool):
                     new_values[k] = v
                 else:
                     error_msg = f"{k} must be of type 'FloatFunctionTable'"
