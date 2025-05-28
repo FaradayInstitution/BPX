@@ -16,7 +16,7 @@ class TestSchema(unittest.TestCase):
     def setUp(self) -> None:
         self.base: dict[str, Any] = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "DFN",
             },
             "Parameterisation": {
@@ -36,9 +36,7 @@ class TestSchema(unittest.TestCase):
                     "Initial concentration [mol.m-3]": 1000,
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
-                    "Diffusivity [m2.s-1]": (
-                        "8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"
-                    ),
+                    "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -93,7 +91,7 @@ class TestSchema(unittest.TestCase):
         # SPM parameter set
         self.base_spm = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -151,7 +149,7 @@ class TestSchema(unittest.TestCase):
         # Non-blended electrodes
         self.base_non_blended = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -273,16 +271,12 @@ class TestSchema(unittest.TestCase):
 
     def test_function_with_exp(self) -> None:
         test = copy.deepcopy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "1.0 * exp(x) + 3"
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "1.0 * exp(x) + 3"
         adapter.validate_python(test)
 
     def test_bad_function(self) -> None:
         test = copy.deepcopy(self.base)
-        test["Parameterisation"]["Electrolyte"][
-            "Conductivity [S.m-1]"
-        ] = "this is not a function"
+        test["Parameterisation"]["Electrolyte"]["Conductivity [S.m-1]"] = "this is not a function"
         with pytest.raises(ValidationError):
             adapter.validate_python(test)
 
@@ -410,6 +404,18 @@ class TestSchema(unittest.TestCase):
             "bad": True,
         }
         with pytest.raises(TypeError):
+            adapter.validate_python(test)
+
+    def test_deprecated_bpx_version(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Header"]["BPX"] = 0.4
+        with pytest.warns(DeprecationWarning, match="The 'bpx' field now expects the BPX semantic version as a string"):
+            adapter.validate_python(test)
+
+    def test_bad_bpx_version(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Header"]["BPX"] = "1.2.3.4"  # Invalid version format
+        with pytest.raises(ValidationError, match="String should match pattern"):
             adapter.validate_python(test)
 
     def test_valid_nested_user_defined(self) -> None:

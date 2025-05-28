@@ -12,7 +12,7 @@ class TestParsers(unittest.TestCase):
         base = """
             {
                 "Header": {
-                        "BPX": 0.1,
+                        "BPX": "0.1.0",
                         "Title": "Parameterisation example of an NMC111|graphite 12.5 Ah pouch cell",
                         "Model": "DFN"
                 },
