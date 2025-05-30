@@ -47,7 +47,7 @@ class Function(str):
         try:
             cls.parser.parse_string(v)
         except ExpressionParser.ParseException as e:
-            raise ValueError(str(e)) from e
+            raise ValueError("Invalid Function: " + str(e)) from e
         return cls(v)
 
     @classmethod
