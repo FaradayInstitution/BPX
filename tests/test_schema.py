@@ -16,7 +16,7 @@ class TestSchema(unittest.TestCase):
     def setUp(self) -> None:
         self.base: dict[str, Any] = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "DFN",
             },
             "Parameterisation": {
@@ -91,7 +91,7 @@ class TestSchema(unittest.TestCase):
         # SPM parameter set
         self.base_spm = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -149,7 +149,7 @@ class TestSchema(unittest.TestCase):
         # Non-blended electrodes
         self.base_non_blended = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -381,10 +381,27 @@ class TestSchema(unittest.TestCase):
         }
         adapter.validate_python(test)
 
+    def test_user_defined_bad_table(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["User-defined"] = {
+            "a": {
+                "a": [1.0, 2.0],
+                "b": [2.3, 4.5],
+            },
+        }
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
+
     def test_user_defined_function(self) -> None:
         test = copy.deepcopy(self.base)
         test["Parameterisation"]["User-defined"] = {"a": "2.0 * x"}
         adapter.validate_python(test)
+
+    def test_user_defined_bad_function(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["User-defined"] = {"a": "this is not a function"}
+        with pytest.raises(ValidationError):
+            adapter.validate_python(test)
 
     def test_bad_user_defined(self) -> None:
         test = copy.deepcopy(self.base)
@@ -399,6 +416,106 @@ class TestSchema(unittest.TestCase):
         test = copy.deepcopy(self.base)
         test["Parameterisation"]["User-defined"] = {"foobar": 10}
         adapter.validate_python(test)
+
+    def test_deprecated_bpx_version(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Header"]["BPX"] = 0.4
+        with pytest.warns(DeprecationWarning, match="The 'bpx' field now expects the BPX semantic version as a string"):
+            adapter.validate_python(test)
+
+    def test_bad_bpx_version(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Header"]["BPX"] = "1.2.3.4"  # Invalid version format
+        with pytest.raises(ValidationError, match="String should match pattern"):
+            adapter.validate_python(test)
+
+    def test_valid_nested_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Allow any arbitrary JSON as long as all the leaves are valid
+        # FloatFunctionTable
+        test["Parameterisation"]["User-defined"] = {
+            "description": "My model",
+            "My model 1": {
+                "Function 1": "2.0 * x",
+                "Parameter 1": 0.1,
+                "coefficients": {
+                    "x": [1.0, 2.0],
+                    "y": [2.3, 4.5],
+                },
+            },
+            "My model 2": {
+                "Function 1": "4.0 * x",
+                "Parameter 1": 0.5,
+                "Parameter 2": 2,
+                "coefficients": {
+                    "x": [10.0, 20.0],
+                    "y": [20.3, 40.5],
+                },
+            },
+        }
+        obj = adapter.validate_python(test)
+
+        assert obj.model_dump(by_alias=True)["Parameterisation"]["User-defined"]["My model 2"]["Parameter 2"] == 2
+
+    def test_invalid_nested_string_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Don't allow non-function strings within the user-defined structure
+        test["Parameterisation"]["User-defined"] = {
+            "My model 2": {
+                "submodel": "Type 1",
+            },
+        }
+        with pytest.raises(ValidationError, match="Invalid Function: "):
+            adapter.validate_python(test)
+
+    def test_invalid_nested_table_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Catch invalid tables under user-defined structure
+        test["Parameterisation"]["User-defined"] = {
+            "My model 2": {
+                "coefficients": {
+                    "a": [1.0, 2.0],
+                    "b": [2.3, 4.5],
+                },
+            },
+        }
+
+        with pytest.raises(ValidationError, match="Field required"):
+            adapter.validate_python(test)
+
+    def test_invalid_type_nested_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Don't allow other leaf types within the user-defined structure
+        test["Parameterisation"]["User-defined"] = {
+            "My model 2": {
+                "Is a good model": True,
+            },
+        }
+
+        with pytest.raises(TypeError, match="must be of type 'FloatFunctionTable'"):
+            adapter.validate_python(test)
+
+    def test_invalid_key_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Don't allow non-string keys in user-defined
+        test["Parameterisation"]["User-defined"] = {
+            4: {
+                "Function 1": "2.0 * x",
+            },
+        }
+
+        with pytest.raises(ValidationError, match="Keys should be strings"):
+            adapter.validate_python(test)
+
+    def test_invalid_description_user_defined(self) -> None:
+        test = copy.deepcopy(self.base)
+        # Don't allow non-string keys in user-defined
+        test["Parameterisation"]["User-defined"] = {
+            "description": 5.0,
+        }
+
+        with pytest.raises(ValidationError, match="Input should be a valid string"):
+            adapter.validate_python(test)
 
 
 if __name__ == "__main__":
