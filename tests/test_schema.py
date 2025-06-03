@@ -99,13 +99,13 @@ class TestSchema(unittest.TestCase):
                     "Ambient temperature [K]": 299.0,
                     "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
-                    "Electrode area [m2]": 2.0,
+                    "Electrode area [m2]": 2,
                     "External surface area [m2]": 2.2,
-                    "Volume [m3]": 1.0,
+                    "Volume [m3]": 1,
                     "Number of electrode pairs connected in parallel to make a cell": 1,
-                    "Nominal cell capacity [A.h]": 5.0,
-                    "Lower voltage cut-off [V]": 2.0,
-                    "Upper voltage cut-off [V]": 4.0,
+                    "Nominal cell capacity [A.h]": 5,
+                    "Lower voltage cut-off [V]": 2,
+                    "Upper voltage cut-off [V]": 4,
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -301,6 +301,12 @@ class TestSchema(unittest.TestCase):
         errors = excinfo.value.errors()
         assert len(errors) == 1, f"Expected 1 error, got {len(errors)}: {errors}"
 
+    def test_ints_preserved(self) -> None:
+        test = copy.deepcopy(self.base_spm)
+        obj = adapter.validate_python(test)
+        assert isinstance(obj.parameterisation.cell.electrode_area, int)
+        assert obj.parameterisation.cell.electrode_area == 2
+
     def test_validation_data(self) -> None:
         test = copy.deepcopy(self.base)
         test["Validation"] = {
@@ -405,6 +411,11 @@ class TestSchema(unittest.TestCase):
         }
         with pytest.raises(TypeError):
             adapter.validate_python(test)
+
+    def test_user_defined_int(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["User-defined"] = {"foobar": 10}
+        adapter.validate_python(test)
 
     def test_deprecated_bpx_version(self) -> None:
         test = copy.deepcopy(self.base)

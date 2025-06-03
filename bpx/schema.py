@@ -10,7 +10,8 @@ from bpx import Function, InterpolatedTable
 from .base_extra_model import ExtraBaseModel
 from .validators import check_sto_limits
 
-FloatFunctionTable = Union[float, Function, InterpolatedTable]
+FloatFunctionTable = Union[float, int, Function, InterpolatedTable]
+FloatInt = Union[float, int]
 
 
 class Header(ExtraBaseModel):
@@ -75,18 +76,18 @@ class Cell(ExtraBaseModel):
     separator, or electrolyte).
     """
 
-    electrode_area: float = Field(
+    electrode_area: FloatInt = Field(
         alias="Electrode area [m2]",
         description="Electrode cross-sectional area",
         examples=[1.68e-2],
     )
-    external_surface_area: float = Field(
+    external_surface_area: FloatInt = Field(
         None,
         alias="External surface area [m2]",
         examples=[3.78e-2],
         description="External surface area of cell",
     )
-    volume: float = Field(
+    volume: FloatInt = Field(
         None,
         alias="Volume [m3]",
         examples=[1.27e-4],
@@ -97,49 +98,49 @@ class Cell(ExtraBaseModel):
         examples=[1],
         description=("Number of electrode pairs connected in parallel to make a cell"),
     )
-    lower_voltage_cutoff: float = Field(
+    lower_voltage_cutoff: FloatInt = Field(
         alias="Lower voltage cut-off [V]",
         description="Minimum allowed voltage",
         examples=[2.0],
     )
-    upper_voltage_cutoff: float = Field(
+    upper_voltage_cutoff: FloatInt = Field(
         alias="Upper voltage cut-off [V]",
         description="Maximum allowed voltage",
         examples=[4.4],
     )
-    nominal_cell_capacity: float = Field(
+    nominal_cell_capacity: FloatInt = Field(
         alias="Nominal cell capacity [A.h]",
         description=("Nominal cell capacity. Used to convert between current and C-rate."),
         examples=[5.0],
     )
-    ambient_temperature: float = Field(
+    ambient_temperature: FloatInt = Field(
         alias="Ambient temperature [K]",
         examples=[298.15],
     )
-    initial_temperature: float = Field(
+    initial_temperature: FloatInt = Field(
         None,
         alias="Initial temperature [K]",
         examples=[298.15],
     )
-    reference_temperature: float = Field(
+    reference_temperature: FloatInt = Field(
         None,
         alias="Reference temperature [K]",
         description=("Reference temperature for the Arrhenius temperature dependence"),
         examples=[298.15],
     )
-    density: float = Field(
+    density: FloatInt = Field(
         None,
         alias="Density [kg.m-3]",
         examples=[1000.0],
         description="Density (lumped)",
     )
-    specific_heat_capacity: float = Field(
+    specific_heat_capacity: FloatInt = Field(
         None,
         alias="Specific heat capacity [J.K-1.kg-1]",
         examples=[1000.0],
         description="Specific heat capacity (lumped)",
     )
-    thermal_conductivity: float = Field(
+    thermal_conductivity: FloatInt = Field(
         None,
         alias="Thermal conductivity [W.m-1.K-1]",
         examples=[1.0],
@@ -152,12 +153,12 @@ class Electrolyte(ExtraBaseModel):
     Electrolyte parameters.
     """
 
-    initial_concentration: float = Field(
+    initial_concentration: FloatInt = Field(
         alias="Initial concentration [mol.m-3]",
         examples=[1000],
         description=("Initial / rest lithium ion concentration in the electrolyte"),
     )
-    cation_transference_number: float = Field(
+    cation_transference_number: FloatInt = Field(
         alias="Cation transference number",
         examples=[0.259],
         description="Cation transference number",
@@ -167,7 +168,7 @@ class Electrolyte(ExtraBaseModel):
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
         description=("Lithium ion diffusivity in electrolyte (constant or function of concentration)"),
     )
-    diffusivity_activation_energy: float = Field(
+    diffusivity_activation_energy: FloatInt = Field(
         None,
         alias="Diffusivity activation energy [J.mol-1]",
         examples=[17100],
@@ -178,7 +179,7 @@ class Electrolyte(ExtraBaseModel):
         examples=[1.0],
         description=("Electrolyte conductivity (constant or function of concentration)"),
     )
-    conductivity_activation_energy: float = Field(
+    conductivity_activation_energy: FloatInt = Field(
         None,
         alias="Conductivity activation energy [J.mol-1]",
         examples=[17100],
@@ -191,7 +192,7 @@ class ContactBase(ExtraBaseModel):
     Base class for parameters that are common to electrode and separator components.
     """
 
-    thickness: float = Field(
+    thickness: FloatInt = Field(
         alias="Thickness [m]",
         examples=[85.2e-6],
         description="Contact thickness",
@@ -203,12 +204,12 @@ class Contact(ContactBase):
     Class for parameters that are common to electrode and separator components.
     """
 
-    porosity: float = Field(
+    porosity: FloatInt = Field(
         alias="Porosity",
         examples=[0.47],
         description="Electrolyte volume fraction (porosity)",
     )
-    transport_efficiency: float = Field(
+    transport_efficiency: FloatInt = Field(
         alias="Transport efficiency",
         examples=[0.3222],
         description="Transport efficiency / inverse MacMullin number",
@@ -220,27 +221,27 @@ class Particle(ExtraBaseModel):
     Class for particle parameters.
     """
 
-    minimum_stoichiometry: float = Field(
+    minimum_stoichiometry: FloatInt = Field(
         alias="Minimum stoichiometry",
         examples=[0.1],
         description="Minimum stoichiometry",
     )
-    maximum_stoichiometry: float = Field(
+    maximum_stoichiometry: FloatInt = Field(
         alias="Maximum stoichiometry",
         examples=[0.9],
         description="Maximum stoichiometry",
     )
-    maximum_concentration: float = Field(
+    maximum_concentration: FloatInt = Field(
         alias="Maximum concentration [mol.m-3]",
         examples=[63104.0],
         description="Maximum concentration of lithium ions in particles",
     )
-    particle_radius: float = Field(
+    particle_radius: FloatInt = Field(
         alias="Particle radius [m]",
         examples=[5.86e-6],
         description="Particle radius",
     )
-    surface_area_per_unit_volume: float = Field(
+    surface_area_per_unit_volume: FloatInt = Field(
         alias="Surface area per unit volume [m-1]",
         examples=[382184],
         description="Particle surface area per unit of volume",
@@ -250,7 +251,7 @@ class Particle(ExtraBaseModel):
         examples=["3.3e-14"],
         description=("Lithium ion diffusivity in particle (constant or function of stoichiometry)"),
     )
-    diffusivity_activation_energy: float = Field(
+    diffusivity_activation_energy: FloatInt = Field(
         None,
         alias="Diffusivity activation energy [J.mol-1]",
         examples=[17800],
@@ -267,12 +268,12 @@ class Particle(ExtraBaseModel):
         examples=[{"x": [0, 0.1, 1], "y": [-9e-18, -9e-15, -1e-5]}],
         description=("Entropic change coefficient, function of particle stoichiometry"),
     )
-    reaction_rate_constant: float = Field(
+    reaction_rate_constant: FloatInt = Field(
         alias="Reaction rate constant [mol.m-2.s-1]",
         examples=[1e-10],
         description="Normalised reaction rate K (see notes)",
     )
-    reaction_rate_constant_activation_energy: float = Field(
+    reaction_rate_constant_activation_energy: FloatInt = Field(
         None,
         alias="Reaction rate constant activation energy [J.mol-1]",
         examples=[27010],
@@ -285,7 +286,7 @@ class Electrode(Contact):
     Class for electrode parameters.
     """
 
-    conductivity: float = Field(
+    conductivity: FloatInt = Field(
         alias="Conductivity [S.m-1]",
         examples=[0.18],
         description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
@@ -362,22 +363,22 @@ class Experiment(ExtraBaseModel):
     A class to store experimental data (time, current, voltage, temperature).
     """
 
-    time: list[float] = Field(
+    time: list[FloatInt] = Field(
         alias="Time [s]",
         examples=[[0, 0.1, 0.2, 0.3, 0.4]],
-        description="Time in seconds (list of floats)",
+        description="Time in seconds (list of FloatInts)",
     )
-    current: list[float] = Field(
+    current: list[FloatInt] = Field(
         alias="Current [A]",
         examples=[[-5, -5, -5, -5, -5]],
         description="Current vs time",
     )
-    voltage: list[float] = Field(
+    voltage: list[FloatInt] = Field(
         alias="Voltage [V]",
         examples=[[4.2, 4.1, 4.0, 3.9, 3.8]],
         description="Voltage vs time",
     )
-    temperature: list[float] = Field(
+    temperature: list[FloatInt] = Field(
         None,
         alias="Temperature [K]",
         examples=[[298, 298, 298, 298, 298]],
