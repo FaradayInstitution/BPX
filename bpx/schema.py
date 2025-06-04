@@ -267,7 +267,8 @@ class Particle(ExtraBaseModel):
         alias="OCP (delithiation) [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
         description=(
-            "Open-circuit potential (OCP) of the delithiation branch at the reference temperature, function of particle stoichiometry"
+            "Open-circuit potential (OCP) of the delithiation branch at the reference temperature, "
+            "function of particle stoichiometry"
         ),
     )
     ocp_lith: FloatFunctionTable = Field(
@@ -275,7 +276,8 @@ class Particle(ExtraBaseModel):
         alias="OCP (lithiation) [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
         description=(
-            "Open-circuit potential (OCP) of the lithiation branch at the reference temperature, function of particle stoichiometry"
+            "Open-circuit potential (OCP) of the lithiation branch at the reference temperature, "
+            "function of particle stoichiometry"
         ),
     )
     gamma_hys: FloatInt = Field(
