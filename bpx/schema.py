@@ -282,9 +282,9 @@ class Particle(ExtraBaseModel):
     )
     gamma_hys: FloatInt = Field(
         None,
-        alias="OCP hysteresis decay rate",
+        alias="OCP hysteresis decay constant",
         examples=[0.01],
-        description="OCP hysteresis decay rate in a single-state hysteresis model",
+        description="OCP hysteresis decay constant in a single-state hysteresis model",
     )
     dudt: FloatFunctionTable = Field(
         None,

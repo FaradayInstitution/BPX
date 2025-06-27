@@ -535,7 +535,7 @@ class TestSchema(unittest.TestCase):
 
     def test_gamma_hys(self) -> None:
         test = copy.deepcopy(self.base)
-        test["Parameterisation"]["Negative electrode"]["OCP hysteresis decay rate"] = 0.01
+        test["Parameterisation"]["Negative electrode"]["OCP hysteresis decay constant"] = 0.01
         adapter.validate_python(test)
 
 
