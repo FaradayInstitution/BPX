@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
@@ -350,7 +350,7 @@ class ElectrodeBlendedSPM(ContactBase):
 class UserDefined(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    description: Optional[str] = None
+    description: str | None = None
 
     @model_validator(mode="before")
     @classmethod
