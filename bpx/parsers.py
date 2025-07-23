@@ -48,7 +48,7 @@ def parse_bpx_file(filename: str | Path, v_tol: float = 0.001) -> BPX:
         a parsed BPX model
     """
     if str(filename).endswith((".yml", ".yaml")):
-        import yaml
+        import yaml  # noqa: PLC0415
 
         with Path(filename).open(encoding="utf-8") as f:
             bpx = yaml.safe_load(f)

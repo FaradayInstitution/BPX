@@ -124,7 +124,7 @@ class TestParsers(unittest.TestCase):
 
     def test_parse_string(self) -> None:
         test = copy.copy(self.base)
-        with pytest.warns(UserWarning):
+        with pytest.warns(UserWarning, match="v_tol"):
             parse_bpx_str(test)
 
     def test_parse_string_tolerance(self) -> None:
