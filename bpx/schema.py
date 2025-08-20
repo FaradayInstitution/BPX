@@ -348,7 +348,7 @@ class UserDefined(BaseModel):
                             raise e from e
                         # otherwise assume nested data and recurse
                         new_values[k] = convert_and_validate(v)
-                elif isinstance(v, (float, int)) and not isinstance(v, bool):
+                elif isinstance(v, float | int) and not isinstance(v, bool):
                     new_values[k] = v
                 else:
                     error_msg = f"{k} must be of type 'FloatFunctionTable'"
