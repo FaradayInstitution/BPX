@@ -140,12 +140,20 @@ class Cell(ExtraBaseModel):
         examples=[1000.0],
         description="Specific heat capacity (lumped)",
     )
-    thermal_conductivity: FloatInt = Field(
-        None,
-        alias="Thermal conductivity [W.m-1.K-1]",
-        examples=[1.0],
-        description="Thermal conductivity (lumped)",
-    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_thermal_conductivity(cls, data: dict) -> dict:
+        """
+        Validates that thermal_conductivity is not provided in the Cell section.
+        If provided, raises an error directing users to the User-defined section.
+        """
+        if isinstance(data, dict) and "Thermal conductivity [W.m-1.K-1]" in data:
+            raise ValueError(
+                "The 'Thermal conductivity [W.m-1.K-1]' field is not part of the BPX schema. "
+                "Please provide this parameter in the 'User-defined' section instead."
+            )
+        return data
 
 
 class Electrolyte(ExtraBaseModel):

@@ -25,7 +25,6 @@ class TestParsers(unittest.TestCase):
                             "Upper voltage cut-off [V]": 4.2,
                             "Nominal cell capacity [A.h]": 12.5,
                             "Specific heat capacity [J.K-1.kg-1]": 913,
-                            "Thermal conductivity [W.m-1.K-1]": 2.04,
                             "Density [kg.m-3]": 1847,
                             "Electrode area [m2]": 0.016808,
                             "Number of electrode pairs connected in parallel to make a cell": 34,
@@ -131,3 +130,17 @@ class TestParsers(unittest.TestCase):
         warnings.filterwarnings("error")  # Treat warnings as errors
         test = copy.copy(self.base)
         parse_bpx_str(test, v_tol=0.002)
+
+    def test_thermal_conductivity_error(self) -> None:
+        """Test that providing thermal_conductivity in Cell section raises an error."""
+        test = copy.copy(self.base)
+        # Add thermal conductivity to the Cell section
+        test = test.replace(
+            '"Specific heat capacity [J.K-1.kg-1]": 913,',
+            '"Specific heat capacity [J.K-1.kg-1]": 913, "Thermal conductivity [W.m-1.K-1]": 2.04,',
+        )
+
+        with pytest.raises(
+            ValueError, match="The 'Thermal conductivity \\[W\\.m-1\\.K-1\\]' field is not part of the BPX schema"
+        ):
+            parse_bpx_str(test)
