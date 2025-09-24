@@ -288,6 +288,30 @@ class Particle(ExtraBaseModel):
             "Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"
         ),
     )
+    ocp_delith: FloatFunctionTable = Field(
+        None,
+        alias="OCP (delithiation) [V]",
+        examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
+        description=(
+            "Open-circuit potential (OCP) of the delithiation branch at the reference temperature, "
+            "function of particle stoichiometry"
+        ),
+    )
+    ocp_lith: FloatFunctionTable = Field(
+        None,
+        alias="OCP (lithiation) [V]",
+        examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
+        description=(
+            "Open-circuit potential (OCP) of the lithiation branch at the reference temperature, "
+            "function of particle stoichiometry"
+        ),
+    )
+    gamma_hys: FloatInt = Field(
+        None,
+        alias="OCP hysteresis decay constant",
+        examples=[0.01],
+        description="OCP hysteresis decay constant in a single-state hysteresis model",
+    )
     dudt: FloatFunctionTable = Field(
         None,
         alias="Entropic change coefficient [V.K-1]",
