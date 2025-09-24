@@ -3,7 +3,14 @@ from __future__ import annotations
 import warnings
 from typing import Any, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from bpx import Function, InterpolatedTable
 
@@ -110,7 +117,9 @@ class Cell(ExtraBaseModel):
     )
     nominal_cell_capacity: FloatInt = Field(
         alias="Nominal cell capacity [A.h]",
-        description=("Nominal cell capacity. Used to convert between current and C-rate."),
+        description=(
+            "Nominal cell capacity. Used to convert between current and C-rate."
+        ),
         examples=[5.0],
     )
     ambient_temperature: FloatInt = Field(
@@ -140,12 +149,21 @@ class Cell(ExtraBaseModel):
         examples=[1000.0],
         description="Specific heat capacity (lumped)",
     )
-    thermal_conductivity: FloatInt = Field(
-        None,
-        alias="Thermal conductivity [W.m-1.K-1]",
-        examples=[1.0],
-        description="Thermal conductivity (lumped)",
-    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_thermal_conductivity(cls, data: dict) -> dict:
+        """
+        Validates that thermal_conductivity is not provided in the Cell section.
+        If provided, raises an error directing users to the User-defined section.
+        """
+        if isinstance(data, dict) and "Thermal conductivity [W.m-1.K-1]" in data:
+            error_message = (
+                "The 'Thermal conductivity [W.m-1.K-1]' field is not part of the BPX schema. "
+                "Please provide this parameter in the 'User-defined' section instead."
+            )
+            raise ValueError(error_message)
+        return data
 
 
 class Electrolyte(ExtraBaseModel):
@@ -166,7 +184,9 @@ class Electrolyte(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
-        description=("Lithium ion diffusivity in electrolyte (constant or function of concentration)"),
+        description=(
+            "Lithium ion diffusivity in electrolyte (constant or function of concentration)"
+        ),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -177,7 +197,9 @@ class Electrolyte(ExtraBaseModel):
     conductivity: FloatFunctionTable = Field(
         alias="Conductivity [S.m-1]",
         examples=[1.0],
-        description=("Electrolyte conductivity (constant or function of concentration)"),
+        description=(
+            "Electrolyte conductivity (constant or function of concentration)"
+        ),
     )
     conductivity_activation_energy: FloatInt = Field(
         None,
@@ -249,7 +271,9 @@ class Particle(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["3.3e-14"],
-        description=("Lithium ion diffusivity in particle (constant or function of stoichiometry)"),
+        description=(
+            "Lithium ion diffusivity in particle (constant or function of stoichiometry)"
+        ),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -260,7 +284,9 @@ class Particle(ExtraBaseModel):
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
-        description=("Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"),
+        description=(
+            "Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"
+        ),
     )
     dudt: FloatFunctionTable = Field(
         None,
@@ -289,7 +315,9 @@ class Electrode(Contact):
     conductivity: FloatInt = Field(
         alias="Conductivity [S.m-1]",
         examples=[0.18],
-        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
+        description=(
+            "Effective electronic conductivity of the porous electrode matrix (constant)"
+        ),
     )
 
 
@@ -466,7 +494,9 @@ class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+        alias="Parameterisation",
+    )
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
     @model_validator(mode="before")
