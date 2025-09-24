@@ -123,7 +123,9 @@ class TestParsers(unittest.TestCase):
 
     def test_parse_string(self) -> None:
         test = copy.copy(self.base)
-        with pytest.warns(UserWarning, match="The maximum voltage computed from the STO limits"):
+        with pytest.warns(
+            UserWarning, match="The maximum voltage computed from the STO limits"
+        ):
             parse_bpx_str(test)
 
     def test_parse_string_tolerance(self) -> None:
@@ -141,6 +143,7 @@ class TestParsers(unittest.TestCase):
         )
 
         with pytest.raises(
-            ValueError, match="The 'Thermal conductivity \\[W\\.m-1\\.K-1\\]' field is not part of the BPX schema"
+            ValueError,
+            match="The 'Thermal conductivity \\[W\\.m-1\\.K-1\\]' field is not part of the BPX schema",
         ):
             parse_bpx_str(test)
