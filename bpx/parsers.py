@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import yaml
+
 from .schema import BPX
 
 
@@ -48,8 +50,6 @@ def parse_bpx_file(filename: str | Path, v_tol: float = 0.001) -> BPX:
         a parsed BPX model
     """
     if str(filename).endswith((".yml", ".yaml")):
-        import yaml
-
         with Path(filename).open(encoding="utf-8") as f:
             bpx = yaml.safe_load(f)
     else:

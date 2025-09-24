@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
@@ -334,7 +334,7 @@ class ElectrodeBlendedSPM(ContactBase):
 class UserDefined(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    description: Optional[str] = None
+    description: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -356,7 +356,7 @@ class UserDefined(BaseModel):
                             raise e from e
                         # otherwise assume nested data and recurse
                         new_values[k] = convert_and_validate(v)
-                elif isinstance(v, (float, int)) and not isinstance(v, bool):
+                elif isinstance(v, float | int) and not isinstance(v, bool):
                     new_values[k] = v
                 else:
                     error_msg = f"{k} must be of type 'FloatFunctionTable'"
