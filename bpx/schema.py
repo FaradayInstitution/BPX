@@ -495,7 +495,7 @@ class BPX(ExtraBaseModel):
         alias="Header",
     )
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
-        alias="Parameterisation"
+        alias="Parameterisation",
     )
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
