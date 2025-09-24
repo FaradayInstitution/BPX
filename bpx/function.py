@@ -36,7 +36,7 @@ class Function(str):
         handler: GetJsonSchemaHandler,
     ) -> dict[str, Any]:
         json_schema = handler(core_schema)
-        json_schema["examples"] = ["1 + x", "1.9793 * exp(-39.3631 * x)" "2 * x**2"]
+        json_schema["examples"] = ["1 + x", "1.9793 * exp(-39.3631 * x)", "2 * x**2"]
         return handler.resolve_ref_schema(json_schema)
 
     @classmethod

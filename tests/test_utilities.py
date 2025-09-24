@@ -13,7 +13,7 @@ class TestUtlilities(unittest.TestCase):
     def setUp(self) -> None:
         self.base = {
             "Header": {
-                "BPX": 1.0,
+                "BPX": "1.0.0",
                 "Model": "DFN",
             },
             "Parameterisation": {
