@@ -666,45 +666,78 @@ class BPX(ExtraBaseModel):
             "Positive electrode": _materials_for_electrode(params.positive_electrode),
         }
 
-        def enforce_for(obj: dict | None, label: str) -> None:
+        def enforce_for(obj: dict | None, label: str) -> None:  # noqa: C901
+            present_combinations = {}
+
             if obj is None:
                 return
             extras = getattr(obj, "model_extra", None) or {}
             for raw_key in extras:
                 for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES:
-                    if not raw_key.startswith(f"{prefix}:"):
-                        continue
                     m = obj.key_re(prefix).match(raw_key)
                     electrode = m.group(1).strip()
                     material = m.group(2) or None
                     if electrode not in elec_map:
                         msg = (
-                            f'{label} key {raw_key!r} refers to unknown electrode "{electrode}". '
-                            f"Expected one of {list(elec_map.keys())}."
+                            f'Unknown electrode "{electrode}" in {label}. '
+                            f"Expected one of: {', '.join(elec_map.keys())}."
                         )
                         raise ValueError(msg)
-                    allowed = elec_map[electrode]
-                    if allowed is None:
+                    allowed_materials = elec_map[electrode]
+                    if allowed_materials is None:
                         if material is not None:
-                            msg = (
-                                f"{label} key {raw_key!r} must omit ': {material}' because "
-                                f"{electrode} is single-material."
-                            )
+                            msg = f"Omit ': {material}' from {label!r} key {raw_key!r}. {electrode} is single-material."
                             raise ValueError(msg)
                     else:
                         if material is None:
-                            msg = (
-                                f'{label} key {raw_key!r} must include ": <material>" '
-                                f'because "{electrode}" has multiple materials.'
-                            )
+                            msg = f'{label} key {raw_key!r} must include ": <material>".'
                             raise ValueError(msg)
-                        if material not in allowed:
-                            msg = (
-                                f'{label} key {raw_key!r} uses unknown material "{material}" for "{electrode}". '
-                                f"Allowed: {sorted(allowed)}."
-                            )
+                        if material not in allowed_materials:
+                            msg = f"Unknown material in {label} key {raw_key!r}. Allowed: {sorted(allowed_materials)}."
                             raise ValueError(msg)
+                if electrode in present_combinations:
+                    present_combinations[electrode].add(material)
+                else:
+                    present_combinations[electrode] = {material} if material is not None else None
+            # Check all electrode/material combinations are included
+            if present_combinations != elec_map:
+                expected_vars = [
+                    item
+                    for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES
+                    for item in create_electrode_material_name(prefix, elec_map)
+                ]
+                msg = (
+                    f"Missing electrode/material combinations in {label}. "
+                    f"Expected:\n{'\n'.join(sorted(expected_vars))}\n."
+                )
+                raise ValueError(msg)
 
         enforce_for(getattr(state, "degradation", None), "Degradation")
         enforce_for(getattr(state, "initial_conditions", None), "InitialConditions")
         return self
+
+
+def create_electrode_material_name(base: str, em: dict[str, None | set[str]]) -> str:
+    """
+    Create a standardized name for an electrode material based on its properties.
+
+    Parameters
+    ----------
+    base : str
+        The base name of the electrode material.
+    em : dict[str, str]
+        A dictionary containing properties of the electrode material.
+
+    Returns
+    -------
+    str
+        A standardized name for the electrode material.
+    """
+    props = []
+    for k, v in em.items():
+        if v is None:
+            props.append(f"{base}: {k}")
+        else:
+            for value in v:
+                props.append(f"{base}: {k}: {value}")  # noqa: PERF401
+    return props

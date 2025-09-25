@@ -596,6 +596,52 @@ class TestSchema(unittest.TestCase):
         with pytest.raises(ValidationError, match="Degradation key 'LAM: Positive electrode' must include"):
             adapter.validate_python(test)
 
+    def test_state_mismatch_electrode(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Neutral electrode": 10,
+        }
+        with pytest.raises(ValidationError, match=r"Unknown electrode \"Neutral electrode\" in Degradation"):
+            adapter.validate_python(test)
+
+    def test_state_missing_electrode(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+        }
+        with pytest.raises(ValidationError, match="Missing electrode/material combinations in Degradation"):
+            adapter.validate_python(test)
+
+    def test_state_wrong_electrode_material(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+            "LAM: Positive electrode: fish": 10,
+        }
+        with pytest.raises(
+            ValidationError,
+            match="Unknown material in Degradation key 'LAM: Positive electrode: fish'",
+        ):
+            adapter.validate_python(test)
+
+    def test_state_non_blended(self) -> None:
+        test = copy.deepcopy(self.base_non_blended)
+        test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
+        test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+        }
+        with pytest.raises(ValidationError, match="Omit ': Primary' from 'Degradation' key"):
+            adapter.validate_python(test)
+
 
 if __name__ == "__main__":
     unittest.main()
