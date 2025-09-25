@@ -469,12 +469,12 @@ class InitialConditions(ExtraBaseModel):
         description=("Initial / rest lithium ion concentration in the electrolyte"),
     )
 
-    _HYST_KEY_RE = re.compile(r"^Initial hysteresis state:\s*:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
-    _FLOATINT_ADAPTER = TypeAdapter(FloatInt)
-
     @model_validator(mode="before")
     @classmethod
-    def _validate_lam_key_names(cls, data: dict) -> dict:
+    def _validate_hysteresis_key_names(cls, data: dict) -> dict:
+        _hyst_key_re = re.compile(r"^Initial hysteresis state:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
+        _floatint_adapter = TypeAdapter(FloatInt)
+
         if not isinstance(data, dict):
             return data
 
@@ -491,7 +491,7 @@ class InitialConditions(ExtraBaseModel):
                 msg = f'Unexpected key in "InitialConditions": {k!r}.'
                 raise ValueError(msg)
 
-            if not cls._HYST_KEY_RE.match(k):
+            if not re.match(_hyst_key_re, k):
                 msg = (
                     f'Invalid key in "InitialConditions": {k!r}. '
                     'Expected "Initial hysteresis state: <Electrode>" or '
@@ -500,7 +500,7 @@ class InitialConditions(ExtraBaseModel):
                 raise ValueError(msg)
 
             try:
-                out[k] = cls._FLOATINT_ADAPTER.validate_python(v)
+                out[k] = _floatint_adapter.validate_python(v)
             except ValidationError as e:
                 msg = f'Invalid value in "InitialConditions" ({k!r}: {v!r}). Expected FloatInt.'
                 raise ValueError(msg) from e
@@ -530,12 +530,12 @@ class Degradation(ExtraBaseModel):
         alias="LLI",
     )
 
-    _LAM_KEY_RE = re.compile(r"^LAM\s*:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
-    _FLOATINT_ADAPTER = TypeAdapter(FloatInt)
-
     @model_validator(mode="before")
     @classmethod
     def _validate_lam_key_names(cls, data: dict) -> dict:
+        _lam_key_re = re.compile(r"^LAM\s*:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
+        _floatint_adapter = TypeAdapter(FloatInt)
+
         if not isinstance(data, dict):
             return data
 
@@ -548,7 +548,7 @@ class Degradation(ExtraBaseModel):
                 msg = f'Unexpected key in "Degradation": {k!r}. Only "LLI" and keys starting with "LAM:" are allowed.'
                 raise ValueError(msg)
 
-            if not cls._LAM_KEY_RE.match(k):
+            if not re.match(_lam_key_re, k):
                 msg = (
                     f'Invalid key in "Degradation": {k!r}. '
                     'Expected "LAM: <Electrode>" or "LAM: <Electrode>: <Material>".'
@@ -556,7 +556,7 @@ class Degradation(ExtraBaseModel):
                 raise ValueError(msg)
 
             try:
-                out[k] = cls._FLOATINT_ADAPTER.validate_python(v)
+                out[k] = _floatint_adapter.validate_python(v)
             except ValidationError as e:
                 msg = f'Invalid value in "Degradation" ({k!r}: {v!r}). Expected FloatInt.'
                 raise ValueError(msg) from e
@@ -578,6 +578,7 @@ class State(ExtraBaseModel):
     )
 
     degradation: Degradation = Field(
+        None,
         alias="Degradation",
     )
 
@@ -590,7 +591,7 @@ class BPX(ExtraBaseModel):
 
     header: Header = Field(alias="Header")
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
-    state: State = Field(None, alias="State")
+    state: State = Field(alias="State")
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
     @model_validator(mode="before")

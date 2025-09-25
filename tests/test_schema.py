@@ -21,8 +21,8 @@ class TestSchema(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
-                    "Ambient temperature [K]": 299.0,
-                    "Initial temperature [K]": 299.0,
+                    # "Ambient temperature [K]": 299.0,
+                    # "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
                     "External surface area [m2]": 2.2,
@@ -33,7 +33,7 @@ class TestSchema(unittest.TestCase):
                     "Upper voltage cut-off [V]": 4.0,
                 },
                 "Electrolyte": {
-                    "Initial concentration [mol.m-3]": 1000,
+                    # "Initial concentration [mol.m-3]": 1000,
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
                     "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
@@ -86,6 +86,25 @@ class TestSchema(unittest.TestCase):
                     "Transport efficiency": 0.3222,
                 },
             },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Negative electrode": 5,
+                    "Initial hysteresis state: Positive electrode: Primary": 10,
+                    "Initial hysteresis state: Positive electrode: Secondary": 10,
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299,
+                },
+                # "Degradation": {
+                #     "LLI": 10,
+                #     "LAM: Negative electrode": 5,
+                #     "LAM: Positive electrode: Primary": 10,
+                #     "LAM: Positive electrode: Secondary": 10,
+                # },
+            },
         }
 
         # SPM parameter set
@@ -96,8 +115,8 @@ class TestSchema(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
-                    "Ambient temperature [K]": 299.0,
-                    "Initial temperature [K]": 299.0,
+                    # "Ambient temperature [K]": 299.0,
+                    # "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2,
                     "External surface area [m2]": 2.2,
@@ -144,6 +163,25 @@ class TestSchema(unittest.TestCase):
                     },
                 },
             },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Positive electrode: Primary": 10,
+                    "Initial hysteresis state: Positive electrode: Secondary": 10,
+                    "Initial hysteresis state: Negative electrode": 5,
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299,
+                },
+                # "Degradation": {
+                #     "LLI": 10,
+                #     "LAM: Positive electrode: Primary": 10,
+                #     "LAM: Positive electrode: Secondary": 10,
+                #     "LAM: Negative electrode": 5,
+                # },
+            },
         }
 
         # Non-blended electrodes
@@ -154,8 +192,8 @@ class TestSchema(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
-                    "Ambient temperature [K]": 299.0,
-                    "Initial temperature [K]": 299.0,
+                    # "Ambient temperature [K]": 299.0,
+                    # "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
                     "External surface area [m2]": 2.2,
@@ -198,6 +236,23 @@ class TestSchema(unittest.TestCase):
                     "Minimum stoichiometry": 0.42424,
                     "Maximum stoichiometry": 0.96210,
                 },
+            },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Positive electrode": 10,
+                    "Initial hysteresis state: Negative electrode": 5,
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299,
+                },
+                # "Degradation": {
+                #     "LLI": 10,
+                #     "LAM: Positive electrode": 10,
+                #     "LAM: Negative electrode": 5,
+                # },
             },
         }
 
