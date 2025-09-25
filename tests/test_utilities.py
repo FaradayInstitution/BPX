@@ -18,8 +18,6 @@ class TestUtlilities(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
-                    "Ambient temperature [K]": 299.0,
-                    "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
                     "External surface area [m2]": 2.2,
@@ -30,7 +28,6 @@ class TestUtlilities(unittest.TestCase):
                     "Upper voltage cut-off [V]": 4.0,
                 },
                 "Electrolyte": {
-                    "Initial concentration [mol.m-3]": 1000,
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
                     "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
@@ -67,6 +64,18 @@ class TestUtlilities(unittest.TestCase):
                     "Thickness [m]": 1.2e-5,
                     "Porosity": 0.47,
                     "Transport efficiency": 0.3222,
+                },
+            },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Negative electrode": 5,
+                    "Initial hysteresis state: Positive electrode": 10,
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299,
                 },
             },
         }

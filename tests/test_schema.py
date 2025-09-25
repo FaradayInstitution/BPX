@@ -98,12 +98,6 @@ class TestSchema(unittest.TestCase):
                 "Thermal state": {
                     "Ambient temperature [K]": 299,
                 },
-                # "Degradation": {
-                #     "LLI": 10,
-                #     "LAM: Negative electrode": 5,
-                #     "LAM: Positive electrode: Primary": 10,
-                #     "LAM: Positive electrode: Secondary": 10,
-                # },
             },
         }
 
@@ -175,12 +169,6 @@ class TestSchema(unittest.TestCase):
                 "Thermal state": {
                     "Ambient temperature [K]": 299,
                 },
-                # "Degradation": {
-                #     "LLI": 10,
-                #     "LAM: Positive electrode: Primary": 10,
-                #     "LAM: Positive electrode: Secondary": 10,
-                #     "LAM: Negative electrode": 5,
-                # },
             },
         }
 
@@ -248,11 +236,6 @@ class TestSchema(unittest.TestCase):
                 "Thermal state": {
                     "Ambient temperature [K]": 299,
                 },
-                # "Degradation": {
-                #     "LLI": 10,
-                #     "LAM: Positive electrode": 10,
-                #     "LAM: Negative electrode": 5,
-                # },
             },
         }
 
@@ -570,6 +553,26 @@ class TestSchema(unittest.TestCase):
         }
 
         with pytest.raises(ValidationError, match="Input should be a valid string"):
+            adapter.validate_python(test)
+
+    def test_state_degradation_data(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+            "LAM: Positive electrode: Secondary": 10,
+        }
+        adapter.validate_python(test)
+
+    def test_state_incorrect_degradation_data(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode": 10,
+        }
+        with pytest.raises(ValidationError, match="Degradation key 'LAM: Positive electrode' must include"):
             adapter.validate_python(test)
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import Any, Literal, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, field_validator, model_validator
 
@@ -10,6 +10,9 @@ from bpx import Function, InterpolatedTable
 
 from .base_extra_model import ExtraBaseModel
 from .validators import check_sto_limits
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 FloatFunctionTable = Union[float, int, Function, InterpolatedTable]
 FloatInt = Union[float, int]
@@ -444,13 +447,72 @@ class ParameterisationSPM(ExtraBaseModel):
         return check_sto_limits(self)
 
 
-class InitialConditions(ExtraBaseModel):
+class ElectrodeMaterialProperties(ExtraBaseModel):
     """
-    A class to store the initial state of a battery (e.g. initial state of charge).
+    A mixin class for State sections which contain BPX variables that uniquely identify
+    an electrode/material.
     """
 
     model_config = ConfigDict(extra="allow")
 
+    ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]]
+
+    _KEY_RE_CACHE: ClassVar[dict[str, re.Pattern]] = {}
+    _FLOATINT_ADAPTER: ClassVar[TypeAdapter] = TypeAdapter(FloatInt)
+
+    @classmethod
+    def key_re(cls, prefix: str) -> re.Pattern:
+        pattern = cls._KEY_RE_CACHE.get(prefix)
+        if pattern is None:
+            pattern = re.compile(rf"^{re.escape(prefix)}:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
+            cls._KEY_RE_CACHE[prefix] = pattern
+        return pattern
+
+    @classmethod
+    def _is_declared_field(cls, key: str) -> bool:
+        return any(key == (f.alias or name) for name, f in cls.model_fields.items())
+
+    @classmethod
+    def _iter_extras(cls, data: dict) -> Iterable[tuple[str, str, Optional[str]]]:
+        for k in data:
+            if cls._is_declared_field(k):
+                continue
+            if not isinstance(k, str):
+                msg = f"Unexpected non-string key {k!r}"
+                raise TypeError(msg)
+            for prefix in cls.ELECTRODE_MATERIAL_VAR_PREFIXES:
+                if k.startswith(f"{prefix}:"):
+                    m = cls.key_re(prefix).match(k)
+                    if not m:
+                        msg = (
+                            f'Invalid key {k!r}. Expected "{prefix}: : <Electrode>"'
+                            f' or "{prefix}: : <Electrode> : <Material>".'
+                        )
+                        raise ValueError(msg)
+                    yield (k, m.group(1).strip(), (m.group(2) or None) and m.group(2).strip())
+                    break
+            else:
+                allowed = ", ".join(f'"{p}:"' for p in cls.ELECTRODE_MATERIAL_VAR_PREFIXES)
+                msg = f"Unexpected key {k!r}. Only declared fields and {allowed} keys are allowed."
+                raise ValueError(msg)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_values_to_floatint(cls, data: dict) -> dict:
+        if not isinstance(data, dict):
+            return data
+        out = dict(data)
+
+        for raw_key, _, _ in cls._iter_extras(out):
+            try:
+                out[raw_key] = cls._FLOATINT_ADAPTER.validate_python(out[raw_key])
+            except ValidationError as e:  # noqa: PERF203
+                msg = f"Invalid value for {raw_key!r}: expected FloatInt (int or float)."
+                raise ValueError(msg) from e
+        return out
+
+
+class InitialConditions(ElectrodeMaterialProperties):
     initial_soc: FloatInt = Field(
         alias="Initial state-of-charge",
         examples=[0.5],
@@ -469,106 +531,25 @@ class InitialConditions(ExtraBaseModel):
         description=("Initial / rest lithium ion concentration in the electrolyte"),
     )
 
-    @model_validator(mode="before")
-    @classmethod
-    def _validate_hysteresis_key_names(cls, data: dict) -> dict:
-        _hyst_key_re = re.compile(r"^Initial hysteresis state:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
-        _floatint_adapter = TypeAdapter(FloatInt)
-
-        if not isinstance(data, dict):
-            return data
-
-        out = dict(data)
-
-        for k, v in data.items():
-            if k in [
-                "Initial state-of-charge",
-                "Initial temperature [K]",
-                "Initial electrolyte concentration [mol.m-3]",
-            ]:
-                continue
-            if not (isinstance(k, str) and k.startswith("Initial hysteresis state:")):
-                msg = f'Unexpected key in "InitialConditions": {k!r}.'
-                raise ValueError(msg)
-
-            if not re.match(_hyst_key_re, k):
-                msg = (
-                    f'Invalid key in "InitialConditions": {k!r}. '
-                    'Expected "Initial hysteresis state: <Electrode>" or '
-                    '"Initial hysteresis state: <Electrode>: <Material>".'
-                )
-                raise ValueError(msg)
-
-            try:
-                out[k] = _floatint_adapter.validate_python(v)
-            except ValidationError as e:
-                msg = f'Invalid value in "InitialConditions" ({k!r}: {v!r}). Expected FloatInt.'
-                raise ValueError(msg) from e
-
-        return data
+    ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]] = ["Initial hysteresis state"]
 
 
 class ThermalState(ExtraBaseModel):
-    """
-    A class to store the thermal state of a battery (e.g. initial temperature).
-    """
-
     ambient_temperature: FloatInt = Field(
         alias="Ambient temperature [K]",
         examples=[298.15],
     )
 
 
-class Degradation(ExtraBaseModel):
-    """
-    A class to store the degradation state of a battery.
-    """
-
-    model_config = ConfigDict(extra="allow")
-
+class Degradation(ElectrodeMaterialProperties):
     lli: FloatInt = Field(
         alias="LLI",
     )
 
-    @model_validator(mode="before")
-    @classmethod
-    def _validate_lam_key_names(cls, data: dict) -> dict:
-        _lam_key_re = re.compile(r"^LAM\s*:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
-        _floatint_adapter = TypeAdapter(FloatInt)
-
-        if not isinstance(data, dict):
-            return data
-
-        out = dict(data)
-
-        for k, v in data.items():
-            if k == "LLI":
-                continue
-            if not (isinstance(k, str) and k.startswith("LAM:")):
-                msg = f'Unexpected key in "Degradation": {k!r}. Only "LLI" and keys starting with "LAM:" are allowed.'
-                raise ValueError(msg)
-
-            if not re.match(_lam_key_re, k):
-                msg = (
-                    f'Invalid key in "Degradation": {k!r}. '
-                    'Expected "LAM: <Electrode>" or "LAM: <Electrode>: <Material>".'
-                )
-                raise ValueError(msg)
-
-            try:
-                out[k] = _floatint_adapter.validate_python(v)
-            except ValidationError as e:
-                msg = f'Invalid value in "Degradation" ({k!r}: {v!r}). Expected FloatInt.'
-                raise ValueError(msg) from e
-
-        return data
+    ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]] = ["LAM"]
 
 
 class State(ExtraBaseModel):
-    """
-    A class to store a battery state (e.g. initial state of charge).
-    """
-
     initial_conditions: InitialConditions = Field(
         alias="Initial conditions",
     )
@@ -625,67 +606,60 @@ class BPX(ExtraBaseModel):
         return data
 
     @model_validator(mode="after")
-    def _validate_state_against_electrodes(self) -> BPX:
-        """
-        Enforce that for state variables which identify an electrode and optionally a
-        material:
-          * For blended electrodes, 'x: Electrode: Material' is required and
-            'Material' must be a key in `ElectrodeBlended.particle`.
-          * For single-material electrodes, 'x: Electrode' must omit material.
-        """
-        # If 'State' is missing, nothing to do
-        state = getattr(self, "State", None)
-        params = getattr(self, "Parameterisation", None)
-        if state is None:
-            return self
+    def _check_state_against_electrodes(self) -> BPX:  # noqa: C901
+        params = self.parameterisation
+        state = self.state
 
-        def materials_for_electrode(e: dict) -> set[str] | None:
-            # blended types have a 'particle' dict[str, Particle]
+        def _materials_for_electrode(e: dict) -> Optional[set[str]]:
             part = getattr(e, "particle", None)
             if isinstance(part, dict) and part:
-                return set(part.keys())  # blended electrode
-            return None  # single material
+                return set(part.keys())
+            return None
 
-        elec_map = {
-            "Negative electrode": materials_for_electrode(params.negative_electrode),
-            "Positive electrode": materials_for_electrode(params.positive_electrode),
+        elec_map: dict[str, Optional[set[str]]] = {
+            "Negative electrode": _materials_for_electrode(params.negative_electrode),
+            "Positive electrode": _materials_for_electrode(params.positive_electrode),
         }
-        # flatten this and turn into a set of names to check all keys match.
 
-        deg_keys = state.degradation.model_extra.keys() if state.degradation.model_extra else []
-        init_keys = state.initial_conditions.model_extra.keys() if state.initial_conditions.model_extra else []
+        def enforce_for(obj: dict | None, label: str) -> None:
+            if obj is None:
+                return
+            extras = getattr(obj, "model_extra", None) or {}
+            for raw_key in extras:
+                for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES:
+                    if not raw_key.startswith(f"{prefix}:"):
+                        continue
+                    m = obj.key_re(prefix).match(raw_key)
+                    electrode = m.group(1).strip()
+                    material = m.group(2) or None
+                    if electrode not in elec_map:
+                        msg = (
+                            f'{label} key {raw_key!r} refers to unknown electrode "{electrode}". '
+                            f"Expected one of {list(elec_map.keys())}."
+                        )
+                        raise ValueError(msg)
+                    allowed = elec_map[electrode]
+                    if allowed is None:
+                        if material is not None:
+                            msg = (
+                                f"{label} key {raw_key!r} must omit ': {material}' because "
+                                f"{electrode} is single-material."
+                            )
+                            raise ValueError(msg)
+                    else:
+                        if material is None:
+                            msg = (
+                                f'{label} key {raw_key!r} must include ": <material>" '
+                                f'because "{electrode}" has multiple materials.'
+                            )
+                            raise ValueError(msg)
+                        if material not in allowed:
+                            msg = (
+                                f'{label} key {raw_key!r} uses unknown material "{material}" for "{electrode}". '
+                                f"Allowed: {sorted(allowed)}."
+                            )
+                            raise ValueError(msg)
 
-        extras = deg_keys | init_keys
-
-        for raw_key in extras:
-            electrode, material = (raw_key.group(1).strip(), (raw_key.group(2) or None))
-            if electrode not in elec_map:
-                msg = (
-                    f"Key '{raw_key!r}' refers to unknown electrode '{electrode}'. "
-                    f"Expected one of {list(elec_map.keys())}."
-                )
-                raise ValueError(msg)
-
-            allowed_materials = elec_map[electrode]
-
-            if allowed_materials is None:
-                # Single-material electrode: material must be omitted
-                if material is not None:
-                    msg = (
-                        f"Key '{raw_key!r}' must omit ': {material}' because '{electrode}' "
-                        "is a single-material electrode."
-                    )
-                    raise ValueError(msg)
-            else:
-                # Blended electrode: material is required and must match particle keys
-                if material is None:
-                    msg = f"Key '{raw_key!r}' must include ': material' because '{electrode}' has multiple materials."
-                    raise ValueError(msg)
-                if material not in allowed_materials:
-                    msg = (
-                        f'LAM key {raw_key!r} uses unknown material "{material}" for "{electrode}". '
-                        f"Allowed materials: {sorted(allowed_materials)}."
-                    )
-                    raise ValueError(msg)
-
+        enforce_for(getattr(state, "degradation", None), "Degradation")
+        enforce_for(getattr(state, "initial_conditions", None), "InitialConditions")
         return self

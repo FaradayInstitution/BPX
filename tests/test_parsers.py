@@ -18,8 +18,6 @@ class TestParsers(unittest.TestCase):
                 },
                 "Parameterisation": {
                         "Cell": {
-                            "Ambient temperature [K]": 298.15,
-                            "Initial temperature [K]": 298.15,
                             "Reference temperature [K]": 298.15,
                             "Lower voltage cut-off [V]": 2.7,
                             "Upper voltage cut-off [V]": 4.2,
@@ -33,14 +31,13 @@ class TestParsers(unittest.TestCase):
                             "Volume [m3]": 0.000128
                         },
                         "Electrolyte": {
-                            "Initial concentration [mol.m-3]": 1000,
                             "Cation transference number": 0.2594,
                             "Conductivity [S.m-1]":
                                 "0.1297 * (x / 1000) ** 3 - 2.51 * (x / 1000) ** 1.5 + 3.329 * (x / 1000)",
                             "Diffusivity [m2.s-1]": "8.794e-11 * (x / 1000) ** 2 - 3.972e-10 * (x / 1000) + 4.862e-10",
                             "Conductivity activation energy [J.mol-1]": 17100,
                             "Diffusivity activation energy [J.mol-1]": 17100
-                        },
+                            },
                         "Negative electrode": {
                             "Particle radius [m]": 4.12e-06,
                             "Thickness [m]": 5.62e-05,
@@ -90,9 +87,21 @@ class TestParsers(unittest.TestCase):
                             "Porosity": 0.47,
                             "Transport efficiency": 0.3222
                         }
+                },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Negative electrode": 5,
+                    "Initial hysteresis state: Positive electrode": 10
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299
                 }
             }
-            """
+        }
+        """
         self.base = base.replace("\n", "")
 
     @pytest.fixture(autouse=True)
