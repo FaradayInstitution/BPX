@@ -4,7 +4,15 @@ import re
 import warnings
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from bpx import Function, InterpolatedTable
 
@@ -135,12 +143,21 @@ class Cell(ExtraBaseModel):
         examples=[1000.0],
         description="Specific heat capacity (lumped)",
     )
-    thermal_conductivity: FloatInt = Field(
-        None,
-        alias="Thermal conductivity [W.m-1.K-1]",
-        examples=[1.0],
-        description="Thermal conductivity (lumped)",
-    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_thermal_conductivity(cls, data: dict) -> dict:
+        """
+        Validates that thermal_conductivity is not provided in the Cell section.
+        If provided, raises an error directing users to the User-defined section.
+        """
+        if isinstance(data, dict) and "Thermal conductivity [W.m-1.K-1]" in data:
+            error_message = (
+                "The 'Thermal conductivity [W.m-1.K-1]' field is not part of the BPX schema. "
+                "Please provide this parameter in the 'User-defined' section instead."
+            )
+            raise ValueError(error_message)
+        return data
 
 
 class Electrolyte(ExtraBaseModel):
@@ -251,6 +268,30 @@ class Particle(ExtraBaseModel):
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
         description=("Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"),
+    )
+    ocp_delith: FloatFunctionTable = Field(
+        None,
+        alias="OCP (delithiation) [V]",
+        examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
+        description=(
+            "Open-circuit potential (OCP) of the delithiation branch at the reference temperature, "
+            "function of particle stoichiometry"
+        ),
+    )
+    ocp_lith: FloatFunctionTable = Field(
+        None,
+        alias="OCP (lithiation) [V]",
+        examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
+        description=(
+            "Open-circuit potential (OCP) of the lithiation branch at the reference temperature, "
+            "function of particle stoichiometry"
+        ),
+    )
+    gamma_hys: FloatInt = Field(
+        None,
+        alias="OCP hysteresis decay constant",
+        examples=[0.01],
+        description="OCP hysteresis decay constant in a single-state hysteresis model",
     )
     dudt: FloatFunctionTable = Field(
         None,
@@ -570,8 +611,12 @@ class BPX(ExtraBaseModel):
     validation data.
     """
 
-    header: Header = Field(alias="Header")
-    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(alias="Parameterisation")
+    header: Header = Field(
+        alias="Header",
+    )
+    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+        alias="Parameterisation",
+    )
     state: State = Field(alias="State")
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 

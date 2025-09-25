@@ -555,6 +555,27 @@ class TestSchema(unittest.TestCase):
         with pytest.raises(ValidationError, match="Input should be a valid string"):
             adapter.validate_python(test)
 
+    def test_ocp_delith(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["Negative electrode"]["OCP (delithiation) [V]"] = {
+            "x": [0, 0.1, 1],
+            "y": [1.72, 1.2, 0.06],
+        }
+        adapter.validate_python(test)
+
+    def test_ocp_lith(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["Negative electrode"]["OCP (lithiation) [V]"] = {
+            "x": [0, 0.1, 1],
+            "y": [1.72, 1.2, 0.06],
+        }
+        adapter.validate_python(test)
+
+    def test_gamma_hys(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Parameterisation"]["Negative electrode"]["OCP hysteresis decay constant"] = 0.01
+        adapter.validate_python(test)
+
     def test_state_degradation_data(self) -> None:
         test = copy.deepcopy(self.base)
         test["State"]["Degradation"] = {
