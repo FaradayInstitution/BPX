@@ -18,8 +18,6 @@ class TestParsers(unittest.TestCase):
                 },
                 "Parameterisation": {
                         "Cell": {
-                            "Ambient temperature [K]": 298.15,
-                            "Initial temperature [K]": 298.15,
                             "Reference temperature [K]": 298.15,
                             "Lower voltage cut-off [V]": 2.7,
                             "Upper voltage cut-off [V]": 4.2,
@@ -32,7 +30,6 @@ class TestParsers(unittest.TestCase):
                             "Volume [m3]": 0.000128
                         },
                         "Electrolyte": {
-                            "Initial concentration [mol.m-3]": 1000,
                             "Cation transference number": 0.2594,
                             "Conductivity [S.m-1]":
                                 "0.1297 * (x / 1000) ** 3 - 2.51 * (x / 1000) ** 1.5 + 3.329 * (x / 1000)",
@@ -88,9 +85,21 @@ class TestParsers(unittest.TestCase):
                             "Thickness [m]": 2e-05,
                             "Porosity": 0.47,
                             "Transport efficiency": 0.3222
+                            }
+                        },
+                        "State": {
+                            "Initial conditions": {
+                                "Initial state-of-charge": 100,
+                                "Initial electrolyte concentration [mol.m-3]": 1000,
+                                "Initial temperature [K]": 299,
+                                "Initial hysteresis state: Negative electrode": 5,
+                                "Initial hysteresis state: Positive electrode": 10
+                            },
+                            "Thermal state": {
+                                "Ambient temperature [K]": 299
+                                }
+                            }
                         }
-                }
-            }
             """
         self.base = base.replace("\n", "")
 

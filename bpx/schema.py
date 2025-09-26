@@ -117,19 +117,8 @@ class Cell(ExtraBaseModel):
     )
     nominal_cell_capacity: FloatInt = Field(
         alias="Nominal cell capacity [A.h]",
-        description=(
-            "Nominal cell capacity. Used to convert between current and C-rate."
-        ),
+        description=("Nominal cell capacity. Used to convert between current and C-rate."),
         examples=[5.0],
-    )
-    ambient_temperature: FloatInt = Field(
-        alias="Ambient temperature [K]",
-        examples=[298.15],
-    )
-    initial_temperature: FloatInt = Field(
-        None,
-        alias="Initial temperature [K]",
-        examples=[298.15],
     )
     reference_temperature: FloatInt = Field(
         None,
@@ -171,11 +160,6 @@ class Electrolyte(ExtraBaseModel):
     Electrolyte parameters.
     """
 
-    initial_concentration: FloatInt = Field(
-        alias="Initial concentration [mol.m-3]",
-        examples=[1000],
-        description=("Initial / rest lithium ion concentration in the electrolyte"),
-    )
     cation_transference_number: FloatInt = Field(
         alias="Cation transference number",
         examples=[0.259],
@@ -184,9 +168,7 @@ class Electrolyte(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
-        description=(
-            "Lithium ion diffusivity in electrolyte (constant or function of concentration)"
-        ),
+        description=("Lithium ion diffusivity in electrolyte (constant or function of concentration)"),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -197,9 +179,7 @@ class Electrolyte(ExtraBaseModel):
     conductivity: FloatFunctionTable = Field(
         alias="Conductivity [S.m-1]",
         examples=[1.0],
-        description=(
-            "Electrolyte conductivity (constant or function of concentration)"
-        ),
+        description=("Electrolyte conductivity (constant or function of concentration)"),
     )
     conductivity_activation_energy: FloatInt = Field(
         None,
@@ -271,9 +251,7 @@ class Particle(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["3.3e-14"],
-        description=(
-            "Lithium ion diffusivity in particle (constant or function of stoichiometry)"
-        ),
+        description=("Lithium ion diffusivity in particle (constant or function of stoichiometry)"),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -284,9 +262,7 @@ class Particle(ExtraBaseModel):
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
-        description=(
-            "Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"
-        ),
+        description=("Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"),
     )
     ocp_delith: FloatFunctionTable = Field(
         None,
@@ -339,9 +315,7 @@ class Electrode(Contact):
     conductivity: FloatInt = Field(
         alias="Conductivity [S.m-1]",
         examples=[0.18],
-        description=(
-            "Effective electronic conductivity of the porous electrode matrix (constant)"
-        ),
+        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
     )
 
 
@@ -509,6 +483,72 @@ class ParameterisationSPM(ExtraBaseModel):
         return check_sto_limits(self)
 
 
+class InitialConditions(ExtraBaseModel):
+    initial_soc: FloatInt = Field(
+        alias="Initial state-of-charge",
+        examples=[0.5],
+        description=("Initial state of charge of the battery (between 0 and 1)"),
+    )
+
+    initial_temperature: FloatInt = Field(
+        alias="Initial temperature [K]",
+        examples=[298.15],
+    )
+
+    initial_electrolyte_concentration: FloatInt = Field(
+        alias="Initial electrolyte concentration [mol.m-3]",
+        examples=[1000],
+        description=("Initial / rest lithium ion concentration in the electrolyte"),
+    )
+
+    initial_hysteresis_state_positive: FloatInt | dict[str, FloatInt] = Field(
+        alias="Initial hysteresis state: Positive electrode",
+        examples=[0.0],
+        description=("Initial hysteresis state for positive electrode"),
+    )
+
+    initial_hysteresis_state_negative: FloatInt | dict[str, FloatInt] = Field(
+        alias="Initial hysteresis state: Negative electrode",
+        examples=[0.0],
+        description=("Initial hysteresis state for negative electrode"),
+    )
+
+
+class ThermalState(ExtraBaseModel):
+    ambient_temperature: FloatInt = Field(
+        alias="Ambient temperature [K]",
+        examples=[298.15],
+    )
+
+
+class Degradation(ExtraBaseModel):
+    lli: FloatInt = Field(
+        alias="LLI",
+    )
+
+    lam_positive: FloatInt | dict[str, FloatInt] = Field(
+        alias="LAM: Positive electrode",
+    )
+    lam_negative: FloatInt | dict[str, FloatInt] = Field(
+        alias="LAM: Negative electrode",
+    )
+
+
+class State(ExtraBaseModel):
+    initial_conditions: InitialConditions = Field(
+        alias="Initial conditions",
+    )
+
+    thermal_state: ThermalState = Field(
+        alias="Thermal state",
+    )
+
+    degradation: Degradation = Field(
+        None,
+        alias="Degradation",
+    )
+
+
 class BPX(ExtraBaseModel):
     """
     A class to store a BPX model. Consists of a header, parameterisation, and optional
@@ -521,6 +561,7 @@ class BPX(ExtraBaseModel):
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
         alias="Parameterisation",
     )
+    state: State = Field(alias="State")
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
     @model_validator(mode="before")
