@@ -21,8 +21,8 @@ class TestSchema(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
-                    "Ambient temperature [K]": 299.0,
-                    "Initial temperature [K]": 299.0,
+                    # "Ambient temperature [K]": 299.0,
+                    # "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
                     "External surface area [m2]": 2.2,
@@ -33,7 +33,7 @@ class TestSchema(unittest.TestCase):
                     "Upper voltage cut-off [V]": 4.0,
                 },
                 "Electrolyte": {
-                    "Initial concentration [mol.m-3]": 1000,
+                    # "Initial concentration [mol.m-3]": 1000,
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
                     "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
@@ -86,6 +86,19 @@ class TestSchema(unittest.TestCase):
                     "Transport efficiency": 0.3222,
                 },
             },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Negative electrode": 5,
+                    "Initial hysteresis state: Positive electrode: Primary": 10,
+                    "Initial hysteresis state: Positive electrode: Secondary": 10,
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299,
+                },
+            },
         }
 
         # SPM parameter set
@@ -96,8 +109,8 @@ class TestSchema(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
-                    "Ambient temperature [K]": 299.0,
-                    "Initial temperature [K]": 299.0,
+                    # "Ambient temperature [K]": 299.0,
+                    # "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2,
                     "External surface area [m2]": 2.2,
@@ -144,6 +157,19 @@ class TestSchema(unittest.TestCase):
                     },
                 },
             },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Positive electrode: Primary": 10,
+                    "Initial hysteresis state: Positive electrode: Secondary": 10,
+                    "Initial hysteresis state: Negative electrode": 5,
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299,
+                },
+            },
         }
 
         # Non-blended electrodes
@@ -154,8 +180,8 @@ class TestSchema(unittest.TestCase):
             },
             "Parameterisation": {
                 "Cell": {
-                    "Ambient temperature [K]": 299.0,
-                    "Initial temperature [K]": 299.0,
+                    # "Ambient temperature [K]": 299.0,
+                    # "Initial temperature [K]": 299.0,
                     "Reference temperature [K]": 299.0,
                     "Electrode area [m2]": 2.0,
                     "External surface area [m2]": 2.2,
@@ -197,6 +223,18 @@ class TestSchema(unittest.TestCase):
                     "Maximum concentration [mol.m-3]": 63104.0,
                     "Minimum stoichiometry": 0.42424,
                     "Maximum stoichiometry": 0.96210,
+                },
+            },
+            "State": {
+                "Initial conditions": {
+                    "Initial state-of-charge": 100,
+                    "Initial electrolyte concentration [mol.m-3]": 1000,
+                    "Initial temperature [K]": 299,
+                    "Initial hysteresis state: Positive electrode": 10,
+                    "Initial hysteresis state: Negative electrode": 5,
+                },
+                "Thermal state": {
+                    "Ambient temperature [K]": 299,
                 },
             },
         }
@@ -537,6 +575,103 @@ class TestSchema(unittest.TestCase):
         test = copy.deepcopy(self.base)
         test["Parameterisation"]["Negative electrode"]["OCP hysteresis decay constant"] = 0.01
         adapter.validate_python(test)
+
+    def test_error_state_wrong_string_format(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode Primary": 10,  # Missing colon
+            "LAM: Positive electrode: Secondary": 10,
+        }
+        with pytest.raises(ValidationError, match=r"Invalid format for 'LAM: Positive electrode Primary'"):
+            adapter.validate_python(test)
+
+    def test_error_state_bad_electrode(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Neutral electrode": 10,  # Invalid electrode
+        }
+        with pytest.raises(ValidationError, match=r"Invalid electrode: 'Neutral electrode'"):
+            adapter.validate_python(test)
+
+    def test_error_state_bad_variable(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "Bad variable": 10,
+        }
+        with pytest.raises(ValidationError, match=r"Unexpected key 'Bad variable'."):
+            adapter.validate_python(test)
+
+    def test_error_state_wrong_type(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": "ten",  # not FloatInt
+            "LAM: Positive electrode: Secondary": 10,
+        }
+        with pytest.raises(ValidationError, match=r"Input should be a valid number"):
+            adapter.validate_python(test)
+
+    def test_state_degradation_data(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+            "LAM: Positive electrode: Secondary": 10,
+        }
+        adapter.validate_python(test)
+
+    def test_error_state_incorrect_degradation_data(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode": 10,
+        }
+        with pytest.raises(ValidationError, match="Degradation key 'LAM: Positive electrode' must include"):
+            adapter.validate_python(test)
+
+    def test_error_state_missing_electrode(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+        }
+        with pytest.raises(ValidationError, match="Missing electrode/material combinations in Degradation"):
+            adapter.validate_python(test)
+
+    def test_error_state_wrong_electrode_material(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+            "LAM: Positive electrode: fish": 10,
+        }
+        with pytest.raises(
+            ValidationError,
+            match="Unknown material in Degradation key 'LAM: Positive electrode: fish'",
+        ):
+            adapter.validate_python(test)
+
+    def test_error_state_materials_provided_with_non_blended(self) -> None:
+        test = copy.deepcopy(self.base_non_blended)
+        test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
+        test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": 10,
+        }
+        with pytest.raises(ValidationError, match="Omit ': Primary' from 'Degradation' key"):
+            adapter.validate_python(test)
 
 
 if __name__ == "__main__":

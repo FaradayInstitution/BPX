@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import re
 import warnings
-from typing import Any, Literal, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union
 
 from pydantic import (
     BaseModel,
@@ -16,6 +17,9 @@ from bpx import Function, InterpolatedTable
 
 from .base_extra_model import ExtraBaseModel
 from .validators import check_sto_limits
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 FloatFunctionTable = Union[float, int, Function, InterpolatedTable]
 FloatInt = Union[float, int]
@@ -117,19 +121,8 @@ class Cell(ExtraBaseModel):
     )
     nominal_cell_capacity: FloatInt = Field(
         alias="Nominal cell capacity [A.h]",
-        description=(
-            "Nominal cell capacity. Used to convert between current and C-rate."
-        ),
+        description=("Nominal cell capacity. Used to convert between current and C-rate."),
         examples=[5.0],
-    )
-    ambient_temperature: FloatInt = Field(
-        alias="Ambient temperature [K]",
-        examples=[298.15],
-    )
-    initial_temperature: FloatInt = Field(
-        None,
-        alias="Initial temperature [K]",
-        examples=[298.15],
     )
     reference_temperature: FloatInt = Field(
         None,
@@ -171,11 +164,6 @@ class Electrolyte(ExtraBaseModel):
     Electrolyte parameters.
     """
 
-    initial_concentration: FloatInt = Field(
-        alias="Initial concentration [mol.m-3]",
-        examples=[1000],
-        description=("Initial / rest lithium ion concentration in the electrolyte"),
-    )
     cation_transference_number: FloatInt = Field(
         alias="Cation transference number",
         examples=[0.259],
@@ -184,9 +172,7 @@ class Electrolyte(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
-        description=(
-            "Lithium ion diffusivity in electrolyte (constant or function of concentration)"
-        ),
+        description=("Lithium ion diffusivity in electrolyte (constant or function of concentration)"),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -197,9 +183,7 @@ class Electrolyte(ExtraBaseModel):
     conductivity: FloatFunctionTable = Field(
         alias="Conductivity [S.m-1]",
         examples=[1.0],
-        description=(
-            "Electrolyte conductivity (constant or function of concentration)"
-        ),
+        description=("Electrolyte conductivity (constant or function of concentration)"),
     )
     conductivity_activation_energy: FloatInt = Field(
         None,
@@ -271,9 +255,7 @@ class Particle(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["3.3e-14"],
-        description=(
-            "Lithium ion diffusivity in particle (constant or function of stoichiometry)"
-        ),
+        description=("Lithium ion diffusivity in particle (constant or function of stoichiometry)"),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -284,9 +266,7 @@ class Particle(ExtraBaseModel):
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
-        description=(
-            "Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"
-        ),
+        description=("Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"),
     )
     ocp_delith: FloatFunctionTable = Field(
         None,
@@ -339,9 +319,7 @@ class Electrode(Contact):
     conductivity: FloatInt = Field(
         alias="Conductivity [S.m-1]",
         examples=[0.18],
-        description=(
-            "Effective electronic conductivity of the porous electrode matrix (constant)"
-        ),
+        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
     )
 
 
@@ -509,6 +487,135 @@ class ParameterisationSPM(ExtraBaseModel):
         return check_sto_limits(self)
 
 
+class ElectrodeMaterialProperties(ExtraBaseModel):
+    """
+    A mixin class for State sections which contain BPX variables that uniquely identify
+    an electrode/material.
+    """
+
+    __pydantic_extra__: dict[str, FloatInt] = Field(init=False)
+
+    model_config = ConfigDict(extra="allow")
+
+    ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]]
+
+    _KEY_RE_CACHE: ClassVar[dict[str, re.Pattern]] = {}
+
+    @classmethod
+    def key_re(cls, prefix: str) -> re.Pattern:
+        pattern = cls._KEY_RE_CACHE.get(prefix)
+        if pattern is None:
+            base_esc = re.escape(prefix)
+            elect_opts = "|".join(re.escape(e) for e in ["Positive electrode", "Negative electrode"])
+
+            # Strict: structure + allowed electrode; allow optional trailing spaces
+            strict = re.compile(
+                rf"^(?P<base>{base_esc}): (?P<electrode>{elect_opts})(?:: (?P<material>.+))?\s*$",
+            )
+
+            # Relaxed: structure only; electrode = any non-colon text (can contain spaces),
+            # 1) Block cases where the text STARTS with an allowed electrode AND has extra words after it
+            #    without a ': ' -> these should be 'malformed', not 'invalid_electrode'.
+            # 2) Otherwise accept a clean multi-word electrode token up to end or ': material'.
+            allowed_prefix = rf"(?:{elect_opts})"
+            relaxed = re.compile(
+                rf"^(?P<base>{base_esc}): "
+                rf"(?!{allowed_prefix}\b\s+\S)"  # <-- disallow 'Allowed Electrode <extra>' without ': '
+                rf"(?P<electrode>[A-Za-z0-9]+(?:[ -][A-Za-z0-9]+)*)"
+                rf"(?:: (?P<material>.+))?\s*$",
+            )
+
+            cls._KEY_RE_CACHE[prefix] = (strict, relaxed)
+            return strict, relaxed
+        return pattern
+
+    @classmethod
+    def _is_declared_field(cls, key: str) -> bool:
+        return any(key == (f.alias or name) for name, f in cls.model_fields.items())
+
+    @model_validator(mode="before")
+    @classmethod
+    def _iter_extras(cls, data: dict) -> Iterable[tuple[str, str, str | None]]:
+        if isinstance(data, dict):
+            for k in data:
+                if cls._is_declared_field(k):
+                    continue
+                for prefix in cls.ELECTRODE_MATERIAL_VAR_PREFIXES:
+                    if k.startswith(f"{prefix}:"):
+                        strict, relaxed = cls.key_re(prefix)
+
+                        m = strict.fullmatch(k)
+                        if m:
+                            break
+
+                        # check for poor format vs unexpected electrode names.
+                        m2 = relaxed.fullmatch(k)
+
+                        if m2 and m2["electrode"].strip() not in ["Positive electrode", "Negative electrode"]:
+                            msg = f"Invalid electrode: {m2['electrode'].strip()!r}"
+                            raise ValueError(msg)
+
+                        msg = f"Invalid format for {k!r}: expected '{prefix}: <electrode>[: <material>]'"
+                        raise ValueError(msg)
+                else:
+                    allowed = ", ".join(f'"{p}:"' for p in cls.ELECTRODE_MATERIAL_VAR_PREFIXES)
+                    msg = f"Unexpected key {k!r}. Only declared fields and {allowed} keys are allowed."
+                    raise ValueError(msg)
+        return data
+
+
+class InitialConditions(ElectrodeMaterialProperties):
+    initial_soc: FloatInt = Field(
+        alias="Initial state-of-charge",
+        examples=[0.5],
+        description=("Initial state of charge of the battery (between 0 and 1)"),
+    )
+
+    initial_temperature: FloatInt = Field(
+        None,
+        alias="Initial temperature [K]",
+        examples=[298.15],
+    )
+
+    initial_electrolyte_concentration: FloatInt = Field(
+        alias="Initial electrolyte concentration [mol.m-3]",
+        examples=[1000],
+        description=("Initial / rest lithium ion concentration in the electrolyte"),
+    )
+
+    ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]] = ["Initial hysteresis state"]
+
+
+class ThermalState(ExtraBaseModel):
+    ambient_temperature: FloatInt = Field(
+        alias="Ambient temperature [K]",
+        examples=[298.15],
+    )
+
+
+class Degradation(ElectrodeMaterialProperties):
+    lli: FloatInt = Field(
+        alias="LLI",
+    )
+
+    ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]] = ["LAM"]
+
+
+class State(ExtraBaseModel):
+    initial_conditions: InitialConditions = Field(
+        alias="Initial conditions",
+    )
+
+    thermal_state: ThermalState = Field(
+        alias="Thermal state",
+    )
+
+    degradation: Degradation = Field(
+        None,
+        alias="Degradation",
+    )
+
+
 class BPX(ExtraBaseModel):
     """
     A class to store a BPX model. Consists of a header, parameterisation, and optional
@@ -521,6 +628,7 @@ class BPX(ExtraBaseModel):
     parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
         alias="Parameterisation",
     )
+    state: State = Field(alias="State")
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
     @model_validator(mode="before")
@@ -552,3 +660,89 @@ class BPX(ExtraBaseModel):
             data["Header"] = header
             data["Parameterisation"] = parameterisation
         return data
+
+    @model_validator(mode="after")
+    def _check_state_against_electrodes(self) -> BPX:  # noqa: C901
+        params = self.parameterisation
+        state = self.state
+
+        def _materials_for_electrode(e: dict) -> set[str] | None:
+            part = getattr(e, "particle", None)
+            if isinstance(part, dict) and part:
+                return set(part.keys())
+            return None
+
+        elec_map: dict[str, set[str]] | None = {
+            "Negative electrode": _materials_for_electrode(params.negative_electrode),
+            "Positive electrode": _materials_for_electrode(params.positive_electrode),
+        }
+
+        def enforce_for(obj: dict | None, label: str) -> None:
+            present_combinations = {}
+
+            if obj is None:
+                return
+            extras = getattr(obj, "model_extra", None) or {}
+            for raw_key in extras:
+                for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES:
+                    strict, _ = obj.key_re(prefix)
+                    m = strict.match(raw_key)
+                    electrode = m.group("electrode").strip()
+                    material = m.group("material").strip() if m.group("material") else None
+                    allowed_materials = elec_map[electrode]
+                    if allowed_materials is None:
+                        if material is not None:
+                            msg = f"Omit ': {material}' from {label!r} key {raw_key!r}. {electrode} is single-material."
+                            raise ValueError(msg)
+                    else:
+                        if material is None:
+                            msg = f'{label} key {raw_key!r} must include ": <material>".'
+                            raise ValueError(msg)
+                        if material not in allowed_materials:
+                            msg = f"Unknown material in {label} key {raw_key!r}. Allowed: {sorted(allowed_materials)}."
+                            raise ValueError(msg)
+                if electrode in present_combinations:
+                    present_combinations[electrode].add(material)
+                else:
+                    present_combinations[electrode] = {material} if material is not None else None
+            # Check all electrode/material combinations are included
+            if present_combinations != elec_map:
+                expected_vars = "\n".join(
+                    [
+                        item
+                        for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES
+                        for item in create_electrode_material_name(prefix, elec_map)
+                    ],
+                )
+                msg = f"Missing electrode/material combinations in {label}. Expected:\n{expected_vars}\n."
+                raise ValueError(msg)
+
+        enforce_for(getattr(state, "degradation", None), "Degradation")
+        enforce_for(getattr(state, "initial_conditions", None), "InitialConditions")
+        return self
+
+
+def create_electrode_material_name(base: str, em: dict[str, None | set[str]]) -> str:
+    """
+    Create a standardized name for an electrode material based on its properties.
+
+    Parameters
+    ----------
+    base : str
+        The base name of the electrode material.
+    em : dict[str, str]
+        A dictionary containing properties of the electrode material.
+
+    Returns
+    -------
+    str
+        A standardized name for the electrode material.
+    """
+    props = []
+    for k, v in em.items():
+        if v is None:
+            props.append(f"{base}: {k}")
+        else:
+            for value in v:
+                props.append(f"{base}: {k}: {value}")  # noqa: PERF401
+    return props
