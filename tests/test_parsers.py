@@ -1,4 +1,5 @@
 import copy
+import re
 import unittest
 import warnings
 
@@ -156,5 +157,35 @@ class TestParsers(unittest.TestCase):
         with pytest.raises(
             ValueError,
             match="The 'Thermal conductivity \\[W\\.m-1\\.K-1\\]' field is not part of the BPX schema",
+        ):
+            parse_bpx_str(test)
+
+    def test_temps_in_cell_error(self) -> None:
+        """Test that providing initial temperature in Cell section raises an error."""
+        test = copy.copy(self.base)
+        # Add initial temperature to the Cell section
+        test = test.replace(
+            '"Reference temperature [K]": 298.15,',
+            '"Reference temperature [K]": 298.15, "Initial temperature [K]": 299,',
+        )
+
+        with pytest.raises(
+            ValueError,
+            match=re.escape("The 'Initial temperature [K]' and 'Ambient temperature [K]' fields have been moved."),
+        ):
+            parse_bpx_str(test)
+
+    def test_initial_concentration_error(self) -> None:
+        """Test that providing initial concentration in Electrolyte section raises an error."""
+        test = copy.copy(self.base)
+        # Add initial concentration to the Electrolyte section
+        test = test.replace(
+            '"Cation transference number": 0.2594,',
+            '"Cation transference number": 0.2594, "Initial concentration [mol.m-3]": 1000,',
+        )
+
+        with pytest.raises(
+            ValueError,
+            match=re.escape("'Initial concentration [mol.m-3]' has been renamed and moved."),
         ):
             parse_bpx_str(test)

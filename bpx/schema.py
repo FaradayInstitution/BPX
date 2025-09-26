@@ -155,6 +155,24 @@ class Cell(ExtraBaseModel):
             raise ValueError(error_message)
         return data
 
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_temperatures_not_in_cell(cls, data: dict) -> dict:
+        """
+        Validates that initial/ambient temperatures are not provided in the Cell section.
+        If provided, raises an error directing users to the State section.
+        """
+        if isinstance(data, dict) and any(
+            field in data for field in ["Initial temperature [K]", "Ambient temperature [K]"]
+        ):
+            error_message = (
+                "The 'Initial temperature [K]' and 'Ambient temperature [K]' fields have been moved. "
+                "Please provide these parameters in 'State.InitialConditions' and "
+                "'State.ThermalState' sections respectively."
+            )
+            raise ValueError(error_message)
+        return data
+
 
 class Electrolyte(ExtraBaseModel):
     """
@@ -188,6 +206,22 @@ class Electrolyte(ExtraBaseModel):
         examples=[17100],
         description="Activation energy for conductivity in electrolyte",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_initial_concentration(cls, data: dict) -> dict:
+        """
+        Validates that initial concentration is not provided in the Electrolyte section.
+        If provided, raises an error directing users to the State section.
+        """
+        if isinstance(data, dict) and "Initial concentration [mol.m-3]" in data:
+            error_message = (
+                "'Initial concentration [mol.m-3]' has been renamed and moved. "
+                "Please provide this parameter as 'Initial electrolyte concentration [mol.m-3]'"
+                " in the 'State.InitialConditions' section instead."
+            )
+            raise ValueError(error_message)
+        return data
 
 
 class ContactBase(ExtraBaseModel):
