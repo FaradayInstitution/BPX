@@ -8,7 +8,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    TypeAdapter,
     ValidationError,
     field_validator,
     model_validator,
@@ -499,14 +498,33 @@ class ElectrodeMaterialProperties(ExtraBaseModel):
     ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]]
 
     _KEY_RE_CACHE: ClassVar[dict[str, re.Pattern]] = {}
-    _FLOATINT_ADAPTER: ClassVar[TypeAdapter] = TypeAdapter(FloatInt)
 
     @classmethod
     def key_re(cls, prefix: str) -> re.Pattern:
         pattern = cls._KEY_RE_CACHE.get(prefix)
         if pattern is None:
-            pattern = re.compile(rf"^{re.escape(prefix)}:\s*([^:]+?)(?:\s*:\s*([^:]+?))?\s*$")
-            cls._KEY_RE_CACHE[prefix] = pattern
+            base_esc = re.escape(prefix)
+            elect_opts = "|".join(re.escape(e) for e in ["Positive electrode", "Negative electrode"])
+
+            # Strict: structure + allowed electrode; allow optional trailing spaces
+            strict = re.compile(
+                rf"^(?P<base>{base_esc}): (?P<electrode>{elect_opts})(?:: (?P<material>.+))?\s*$",
+            )
+
+            # Relaxed: structure only; electrode = any non-colon text (can contain spaces),
+            # 1) Block cases where the text STARTS with an allowed electrode AND has extra words after it
+            #    without a ': ' -> these should be 'malformed', not 'invalid_electrode'.
+            # 2) Otherwise accept a clean multi-word electrode token up to end or ': material'.
+            allowed_prefix = rf"(?:{elect_opts})"
+            relaxed = re.compile(
+                rf"^(?P<base>{base_esc}): "
+                rf"(?!{allowed_prefix}\b\s+\S)"  # <-- disallow 'Allowed Electrode <extra>' without ': '
+                rf"(?P<electrode>[A-Za-z0-9]+(?:[ -][A-Za-z0-9]+)*)"
+                rf"(?:: (?P<material>.+))?\s*$",
+            )
+
+            cls._KEY_RE_CACHE[prefix] = (strict, relaxed)
+            return strict, relaxed
         return pattern
 
     @classmethod
@@ -518,20 +536,25 @@ class ElectrodeMaterialProperties(ExtraBaseModel):
         for k in data:
             if cls._is_declared_field(k):
                 continue
-            if not isinstance(k, str):
-                msg = f"Unexpected non-string key {k!r}"
-                raise TypeError(msg)
             for prefix in cls.ELECTRODE_MATERIAL_VAR_PREFIXES:
                 if k.startswith(f"{prefix}:"):
-                    m = cls.key_re(prefix).match(k)
-                    if not m:
-                        msg = (
-                            f'Invalid key {k!r}. Expected "{prefix}: : <Electrode>"'
-                            f' or "{prefix}: : <Electrode> : <Material>".'
-                        )
+                    strict, relaxed = cls.key_re(prefix)
+
+                    m = strict.fullmatch(k)
+                    if m:
+                        yield (k, m["electrode"].strip(), (m["material"].strip() if m["material"] else None))
+                        break
+
+                    # check for poor format vs unexpected electrode names.
+                    m2 = relaxed.fullmatch(k)
+
+                    if m2 and m2["electrode"].strip() not in ["Positive electrode", "Negative electrode"]:
+                        msg = f"Invalid electrode: {m2['electrode'].strip()!r}"
                         raise ValueError(msg)
-                    yield (k, m.group(1).strip(), (m.group(2) or None) and m.group(2).strip())
-                    break
+
+                    else:
+                        msg = f"Invalid format for {k!r}: expected '{prefix}: <electrode>[: <material>]'"
+                        raise ValueError(msg)
             else:
                 allowed = ", ".join(f'"{p}:"' for p in cls.ELECTRODE_MATERIAL_VAR_PREFIXES)
                 msg = f"Unexpected key {k!r}. Only declared fields and {allowed} keys are allowed."
@@ -540,17 +563,16 @@ class ElectrodeMaterialProperties(ExtraBaseModel):
     @model_validator(mode="before")
     @classmethod
     def _coerce_values_to_floatint(cls, data: dict) -> dict:
-        if not isinstance(data, dict):
-            return data
-        out = dict(data)
+        if isinstance(data, dict):
+            out = dict(data)
 
-        for raw_key, _, _ in cls._iter_extras(out):
-            try:
-                out[raw_key] = cls._FLOATINT_ADAPTER.validate_python(out[raw_key])
-            except ValidationError as e:  # noqa: PERF203
-                msg = f"Invalid value for {raw_key!r}: expected FloatInt (int or float)."
-                raise ValueError(msg) from e
-        return out
+            for raw_key, _, _ in cls._iter_extras(out):
+                if not (isinstance(out[raw_key], (float | int)) and not isinstance(out[raw_key], bool)):
+                    msg = f"Invalid value for {raw_key!r}: expected FloatInt (int or float)."
+                    # Type errors aren't caught by pydantic in extra fields, so we raise here.
+                    raise ValueError(msg)  # noqa: TRY004
+            return out
+        return data
 
 
 class InitialConditions(ElectrodeMaterialProperties):
@@ -666,7 +688,7 @@ class BPX(ExtraBaseModel):
             "Positive electrode": _materials_for_electrode(params.positive_electrode),
         }
 
-        def enforce_for(obj: dict | None, label: str) -> None:  # noqa: C901
+        def enforce_for(obj: dict | None, label: str) -> None:
             present_combinations = {}
 
             if obj is None:
@@ -674,15 +696,10 @@ class BPX(ExtraBaseModel):
             extras = getattr(obj, "model_extra", None) or {}
             for raw_key in extras:
                 for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES:
-                    m = obj.key_re(prefix).match(raw_key)
-                    electrode = m.group(1).strip()
-                    material = m.group(2) or None
-                    if electrode not in elec_map:
-                        msg = (
-                            f'Unknown electrode "{electrode}" in {label}. '
-                            f"Expected one of: {', '.join(elec_map.keys())}."
-                        )
-                        raise ValueError(msg)
+                    strict, _ = obj.key_re(prefix)
+                    m = strict.match(raw_key)
+                    electrode = m.group("electrode").strip()
+                    material = m.group("material").strip() if m.group("material") else None
                     allowed_materials = elec_map[electrode]
                     if allowed_materials is None:
                         if material is not None:

@@ -576,6 +576,47 @@ class TestSchema(unittest.TestCase):
         test["Parameterisation"]["Negative electrode"]["OCP hysteresis decay constant"] = 0.01
         adapter.validate_python(test)
 
+    def test_error_state_wrong_string_format(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode Primary": 10,  # Missing colon
+            "LAM: Positive electrode: Secondary": 10,
+        }
+        with pytest.raises(ValidationError, match=r"Invalid format for 'LAM: Positive electrode Primary'"):
+            adapter.validate_python(test)
+
+    def test_error_state_bad_electrode(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Neutral electrode": 10,  # Invalid electrode
+        }
+        with pytest.raises(ValidationError, match=r"Invalid electrode: 'Neutral electrode'"):
+            adapter.validate_python(test)
+
+    def test_error_state_bad_variable(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "Bad variable": 10,
+        }
+        with pytest.raises(ValidationError, match=r"Unexpected key 'Bad variable'."):
+            adapter.validate_python(test)
+
+    def test_error_state_wrong_type(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode: Primary": "ten",  # not FloatInt
+            "LAM: Positive electrode: Secondary": 10,
+        }
+        with pytest.raises(ValidationError, match=r"Invalid value for 'LAM: Positive electrode: Primary'"):
+            adapter.validate_python(test)
+
     def test_state_degradation_data(self) -> None:
         test = copy.deepcopy(self.base)
         test["State"]["Degradation"] = {
@@ -586,7 +627,7 @@ class TestSchema(unittest.TestCase):
         }
         adapter.validate_python(test)
 
-    def test_state_incorrect_degradation_data(self) -> None:
+    def test_error_state_incorrect_degradation_data(self) -> None:
         test = copy.deepcopy(self.base)
         test["State"]["Degradation"] = {
             "LLI": 10,
@@ -596,17 +637,7 @@ class TestSchema(unittest.TestCase):
         with pytest.raises(ValidationError, match="Degradation key 'LAM: Positive electrode' must include"):
             adapter.validate_python(test)
 
-    def test_state_mismatch_electrode(self) -> None:
-        test = copy.deepcopy(self.base)
-        test["State"]["Degradation"] = {
-            "LLI": 10,
-            "LAM: Negative electrode": 5,
-            "LAM: Neutral electrode": 10,
-        }
-        with pytest.raises(ValidationError, match=r"Unknown electrode \"Neutral electrode\" in Degradation"):
-            adapter.validate_python(test)
-
-    def test_state_missing_electrode(self) -> None:
+    def test_error_state_missing_electrode(self) -> None:
         test = copy.deepcopy(self.base)
         test["State"]["Degradation"] = {
             "LLI": 10,
@@ -616,7 +647,7 @@ class TestSchema(unittest.TestCase):
         with pytest.raises(ValidationError, match="Missing electrode/material combinations in Degradation"):
             adapter.validate_python(test)
 
-    def test_state_wrong_electrode_material(self) -> None:
+    def test_error_state_wrong_electrode_material(self) -> None:
         test = copy.deepcopy(self.base)
         test["State"]["Degradation"] = {
             "LLI": 10,
@@ -630,7 +661,7 @@ class TestSchema(unittest.TestCase):
         ):
             adapter.validate_python(test)
 
-    def test_state_non_blended(self) -> None:
+    def test_error_state_materials_provided_with_non_blended(self) -> None:
         test = copy.deepcopy(self.base_non_blended)
         test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
         test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
