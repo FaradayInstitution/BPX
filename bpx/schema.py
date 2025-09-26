@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Literal, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 from pydantic import (
     BaseModel,
@@ -16,6 +16,9 @@ from bpx import Function, InterpolatedTable
 
 from .base_extra_model import ExtraBaseModel
 from .validators import check_sto_limits
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 FloatFunctionTable = Union[float, int, Function, InterpolatedTable]
 FloatInt = Union[float, int]
@@ -505,12 +508,14 @@ class InitialConditions(ExtraBaseModel):
         alias="Initial hysteresis state: Positive electrode",
         examples=[1.0, {"Primary": 1.0, "Secondary": 5.0}],
         description=("Initial hysteresis state for positive electrode"),
+        json_schema_extra={"material_check": "positive_electrode"},
     )
 
     initial_hysteresis_state_negative: FloatInt | dict[str, FloatInt] = Field(
         alias="Initial hysteresis state: Negative electrode",
         examples=[1.0, {"Primary": 1.0, "Secondary": 5.0}],
         description=("Initial hysteresis state for negative electrode"),
+        json_schema_extra={"material_check": "negative_electrode"},
     )
 
 
@@ -533,9 +538,11 @@ class Degradation(ExtraBaseModel):
 
     lam_positive: FloatInt | dict[str, FloatInt] = Field(
         alias="LAM: Positive electrode",
+        json_schema_extra={"material_check": "positive_electrode"},
     )
     lam_negative: FloatInt | dict[str, FloatInt] = Field(
         alias="LAM: Negative electrode",
+        json_schema_extra={"material_check": "negative_electrode"},
     )
 
 
@@ -598,3 +605,76 @@ class BPX(ExtraBaseModel):
             data["Header"] = header
             data["Parameterisation"] = parameterisation
         return data
+
+    @model_validator(mode="after")
+    def _check_state_against_blended_electrodes(self) -> BPX:
+        """
+        Check that if blended electrodes are used, values which require per-material
+        values in State are provided as such (and vice versa).
+        """
+
+        def _materials_in_electrode(e: dict) -> set[str] | None:
+            part = getattr(e, "particle", None)
+            if isinstance(part, dict) and part:
+                return set(part.keys())
+            return None
+
+        def _find_tagged_fields(model: ExtraBaseModel) -> Iterable[tuple[str, Any, str]]:
+            for name, f in model.__class__.model_fields.items():
+                tag = None
+                jsx = f.json_schema_extra
+                if jsx:
+                    tag = jsx.get("material_check")
+                if tag:
+                    yield f.alias, getattr(model, name), str(tag)
+
+        def _validate_value_against_keys(
+            value: FloatInt | dict[str, FloatInt],
+            expected_keys: set[str] | None,
+            field_path: str,
+        ) -> None:
+            """
+            expected_keys is None for single-material electrodes (value must be scalar),
+            or a set[str] for blended electrodes (value must be dict with exact same keys of scalars).
+            """
+            if expected_keys is None:
+                # single-material: require scalar
+                if isinstance(value, dict):
+                    msg = f"{field_path!r} must be a float. Electrode is a single material."
+                    raise ValueError(msg)
+                return
+
+            # blended: require dict with same keys
+            if not isinstance(value, dict):
+                msg = f"{field_path!r} must be a dict with keys {sorted(expected_keys)}. Electrode is blended."
+                raise ValueError(msg)  # noqa: TRY004
+
+            value_keys = set(value.keys())
+            if value_keys != expected_keys:
+                missing = sorted(expected_keys - value_keys)
+                extra = sorted(value_keys - expected_keys)
+                parts = []
+                if missing:
+                    parts.append(f"missing keys: {missing}")
+                if extra:
+                    parts.append(f"unexpected keys: {extra}")
+                raise ValueError(f"{field_path!r} keys must exactly match {sorted(expected_keys)}; " + ", ".join(parts))
+
+        param = self.parameterisation
+
+        electrode_materials = {
+            "negative_electrode": _materials_in_electrode(param.negative_electrode),
+            "positive_electrode": _materials_in_electrode(param.positive_electrode),
+        }
+
+        # Validate all tagged fields in State submodels
+        def validate_section(section_model: BaseModel, section_label: str) -> None:
+            for attr, value, tag in _find_tagged_fields(section_model):
+                # tag should be 'negative_electrode' or 'positive_electrode'
+                _validate_value_against_keys(value, electrode_materials[tag], f"State.{section_label}.{attr}")
+
+        validate_section(self.state.initial_conditions, "Initial conditions")
+        if self.state.degradation is not None:
+            validate_section(self.state.degradation, "Degradation")
+
+        return self

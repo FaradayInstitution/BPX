@@ -576,6 +576,41 @@ class TestSchema(unittest.TestCase):
         test["Parameterisation"]["Negative electrode"]["OCP hysteresis decay constant"] = 0.01
         adapter.validate_python(test)
 
+    def test_error_state_material_no_dict(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode": 10,
+        }
+        with pytest.raises(ValidationError, match="'State.Degradation.LAM: Positive electrode' must be a dict"):
+            adapter.validate_python(test)
+
+    def test_error_state_dict_not_blended(self) -> None:
+        test = copy.deepcopy(self.base_non_blended)
+        test["Parameterisation"]["Cell"]["Upper voltage cut-off [V]"] = 4.3
+        test["Parameterisation"]["Cell"]["Lower voltage cut-off [V]"] = 2.5
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode": {"Material A": 10},
+        }
+        with pytest.raises(ValidationError, match="'State.Degradation.LAM: Positive electrode' must be a float"):
+            adapter.validate_python(test)
+
+    def test_error_state_material_incorrect_keys(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["State"]["Degradation"] = {
+            "LLI": 10,
+            "LAM: Negative electrode": 5,
+            "LAM: Positive electrode": {"Primary": 10, "Bad material": 5},
+        }
+        with pytest.raises(
+            ValidationError,
+            match="'State.Degradation.LAM: Positive electrode' keys must exactly match",
+        ):
+            adapter.validate_python(test)
+
 
 if __name__ == "__main__":
     unittest.main()
