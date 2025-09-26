@@ -96,6 +96,7 @@ class TestSchema(unittest.TestCase):
                 },
                 "Thermal state": {
                     "Ambient temperature [K]": 299,
+                    "Heat transfer coefficient [W.m-2.K-1]": 10.0,
                 },
             },
         }
@@ -167,6 +168,7 @@ class TestSchema(unittest.TestCase):
                 },
                 "Thermal state": {
                     "Ambient temperature [K]": 299,
+                    "Heat transfer coefficient [W.m-2.K-1]": 10.0,
                 },
             },
         }
@@ -232,6 +234,7 @@ class TestSchema(unittest.TestCase):
                 },
                 "Thermal state": {
                     "Ambient temperature [K]": 299,
+                    "Heat transfer coefficient [W.m-2.K-1]": 10.0,
                 },
             },
         }

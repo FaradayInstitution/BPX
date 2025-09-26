@@ -503,13 +503,13 @@ class InitialConditions(ExtraBaseModel):
 
     initial_hysteresis_state_positive: FloatInt | dict[str, FloatInt] = Field(
         alias="Initial hysteresis state: Positive electrode",
-        examples=[0.0],
+        examples=[1.0, {"Primary": 1.0, "Secondary": 5.0}],
         description=("Initial hysteresis state for positive electrode"),
     )
 
     initial_hysteresis_state_negative: FloatInt | dict[str, FloatInt] = Field(
         alias="Initial hysteresis state: Negative electrode",
-        examples=[0.0],
+        examples=[1.0, {"Primary": 1.0, "Secondary": 5.0}],
         description=("Initial hysteresis state for negative electrode"),
     )
 
@@ -518,6 +518,11 @@ class ThermalState(ExtraBaseModel):
     ambient_temperature: FloatInt = Field(
         alias="Ambient temperature [K]",
         examples=[298.15],
+    )
+
+    heat_transfer_coefficient: FloatInt = Field(
+        alias="Heat transfer coefficient [W.m-2.K-1]",
+        examples=[10.0],
     )
 
 

@@ -96,7 +96,8 @@ class TestParsers(unittest.TestCase):
                                 "Initial hysteresis state: Positive electrode": 10
                             },
                             "Thermal state": {
-                                "Ambient temperature [K]": 299
+                                "Ambient temperature [K]": 299,
+                                "Heat transfer coefficient [W.m-2.K-1]": 10.0
                                 }
                             }
                         }
