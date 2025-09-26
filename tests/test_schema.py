@@ -614,7 +614,7 @@ class TestSchema(unittest.TestCase):
             "LAM: Positive electrode: Primary": "ten",  # not FloatInt
             "LAM: Positive electrode: Secondary": 10,
         }
-        with pytest.raises(ValidationError, match=r"Invalid value for 'LAM: Positive electrode: Primary'"):
+        with pytest.raises(ValidationError, match=r"Input should be a valid number"):
             adapter.validate_python(test)
 
     def test_state_degradation_data(self) -> None:

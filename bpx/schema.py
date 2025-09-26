@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union
 
 from pydantic import (
     BaseModel,
@@ -493,6 +493,8 @@ class ElectrodeMaterialProperties(ExtraBaseModel):
     an electrode/material.
     """
 
+    __pydantic_extra__: dict[str, FloatInt] = Field(init=False)
+
     model_config = ConfigDict(extra="allow")
 
     ELECTRODE_MATERIAL_VAR_PREFIXES: ClassVar[list[str]]
@@ -531,47 +533,34 @@ class ElectrodeMaterialProperties(ExtraBaseModel):
     def _is_declared_field(cls, key: str) -> bool:
         return any(key == (f.alias or name) for name, f in cls.model_fields.items())
 
-    @classmethod
-    def _iter_extras(cls, data: dict) -> Iterable[tuple[str, str, Optional[str]]]:
-        for k in data:
-            if cls._is_declared_field(k):
-                continue
-            for prefix in cls.ELECTRODE_MATERIAL_VAR_PREFIXES:
-                if k.startswith(f"{prefix}:"):
-                    strict, relaxed = cls.key_re(prefix)
-
-                    m = strict.fullmatch(k)
-                    if m:
-                        yield (k, m["electrode"].strip(), (m["material"].strip() if m["material"] else None))
-                        break
-
-                    # check for poor format vs unexpected electrode names.
-                    m2 = relaxed.fullmatch(k)
-
-                    if m2 and m2["electrode"].strip() not in ["Positive electrode", "Negative electrode"]:
-                        msg = f"Invalid electrode: {m2['electrode'].strip()!r}"
-                        raise ValueError(msg)
-
-                    else:
-                        msg = f"Invalid format for {k!r}: expected '{prefix}: <electrode>[: <material>]'"
-                        raise ValueError(msg)
-            else:
-                allowed = ", ".join(f'"{p}:"' for p in cls.ELECTRODE_MATERIAL_VAR_PREFIXES)
-                msg = f"Unexpected key {k!r}. Only declared fields and {allowed} keys are allowed."
-                raise ValueError(msg)
-
     @model_validator(mode="before")
     @classmethod
-    def _coerce_values_to_floatint(cls, data: dict) -> dict:
+    def _iter_extras(cls, data: dict) -> Iterable[tuple[str, str, str | None]]:
         if isinstance(data, dict):
-            out = dict(data)
+            for k in data:
+                if cls._is_declared_field(k):
+                    continue
+                for prefix in cls.ELECTRODE_MATERIAL_VAR_PREFIXES:
+                    if k.startswith(f"{prefix}:"):
+                        strict, relaxed = cls.key_re(prefix)
 
-            for raw_key, _, _ in cls._iter_extras(out):
-                if not (isinstance(out[raw_key], (float | int)) and not isinstance(out[raw_key], bool)):
-                    msg = f"Invalid value for {raw_key!r}: expected FloatInt (int or float)."
-                    # Type errors aren't caught by pydantic in extra fields, so we raise here.
-                    raise ValueError(msg)  # noqa: TRY004
-            return out
+                        m = strict.fullmatch(k)
+                        if m:
+                            break
+
+                        # check for poor format vs unexpected electrode names.
+                        m2 = relaxed.fullmatch(k)
+
+                        if m2 and m2["electrode"].strip() not in ["Positive electrode", "Negative electrode"]:
+                            msg = f"Invalid electrode: {m2['electrode'].strip()!r}"
+                            raise ValueError(msg)
+
+                        msg = f"Invalid format for {k!r}: expected '{prefix}: <electrode>[: <material>]'"
+                        raise ValueError(msg)
+                else:
+                    allowed = ", ".join(f'"{p}:"' for p in cls.ELECTRODE_MATERIAL_VAR_PREFIXES)
+                    msg = f"Unexpected key {k!r}. Only declared fields and {allowed} keys are allowed."
+                    raise ValueError(msg)
         return data
 
 
@@ -677,13 +666,13 @@ class BPX(ExtraBaseModel):
         params = self.parameterisation
         state = self.state
 
-        def _materials_for_electrode(e: dict) -> Optional[set[str]]:
+        def _materials_for_electrode(e: dict) -> set[str] | None:
             part = getattr(e, "particle", None)
             if isinstance(part, dict) and part:
                 return set(part.keys())
             return None
 
-        elec_map: dict[str, Optional[set[str]]] = {
+        elec_map: dict[str, set[str]] | None = {
             "Negative electrode": _materials_for_electrode(params.negative_electrode),
             "Positive electrode": _materials_for_electrode(params.positive_electrode),
         }
@@ -718,15 +707,14 @@ class BPX(ExtraBaseModel):
                     present_combinations[electrode] = {material} if material is not None else None
             # Check all electrode/material combinations are included
             if present_combinations != elec_map:
-                expected_vars = [
-                    item
-                    for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES
-                    for item in create_electrode_material_name(prefix, elec_map)
-                ]
-                msg = (
-                    f"Missing electrode/material combinations in {label}. "
-                    f"Expected:\n{'\n'.join(sorted(expected_vars))}\n."
+                expected_vars = "\n".join(
+                    [
+                        item
+                        for prefix in obj.ELECTRODE_MATERIAL_VAR_PREFIXES
+                        for item in create_electrode_material_name(prefix, elec_map)
+                    ],
                 )
+                msg = f"Missing electrode/material combinations in {label}. Expected:\n{expected_vars}\n."
                 raise ValueError(msg)
 
         enforce_for(getattr(state, "degradation", None), "Degradation")
