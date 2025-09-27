@@ -583,7 +583,10 @@ class TestSchema(unittest.TestCase):
             "LAM: Negative electrode": 5,
             "LAM: Positive electrode": 10,
         }
-        with pytest.raises(ValidationError, match="'State.Degradation.LAM: Positive electrode' must be a dict"):
+        with pytest.raises(
+            ValidationError,
+            match=re.escape("'State.Degradation.LAM: Positive electrode' must be a dict"),
+        ):
             adapter.validate_python(test)
 
     def test_error_state_dict_not_blended(self) -> None:
@@ -595,7 +598,10 @@ class TestSchema(unittest.TestCase):
             "LAM: Negative electrode": 5,
             "LAM: Positive electrode": {"Material A": 10},
         }
-        with pytest.raises(ValidationError, match="'State.Degradation.LAM: Positive electrode' must be a float"):
+        with pytest.raises(
+            ValidationError,
+            match=re.escape("'State.Degradation.LAM: Positive electrode' must be a float"),
+        ):
             adapter.validate_python(test)
 
     def test_error_state_material_incorrect_keys(self) -> None:
@@ -607,7 +613,7 @@ class TestSchema(unittest.TestCase):
         }
         with pytest.raises(
             ValidationError,
-            match="'State.Degradation.LAM: Positive electrode' keys must exactly match",
+            match=re.escape("'State.Degradation.LAM: Positive electrode' keys must exactly match"),
         ):
             adapter.validate_python(test)
 
