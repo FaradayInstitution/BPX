@@ -52,10 +52,10 @@ class Header(ExtraBaseModel):
         description=("May contain any references"),
         examples=["Chang-Hui Chen et al 2020 J. Electrochem. Soc. 167 080534"],
     )
-    model: Literal["SPM", "SPMe", "DFN"] = Field(
+    model: Literal["SPM", "SPMe", "DFN", "Partial"] = Field(
         alias="Model",
         examples=["DFN"],
-        description=('Model type ("SPM", "SPMe", "DFN")'),
+        description=('Model type ("SPM", "SPMe", "DFN", "Partial")'),
     )
 
     @field_validator("bpx", mode="before")
@@ -117,9 +117,7 @@ class Cell(ExtraBaseModel):
     )
     nominal_cell_capacity: FloatInt = Field(
         alias="Nominal cell capacity [A.h]",
-        description=(
-            "Nominal cell capacity. Used to convert between current and C-rate."
-        ),
+        description=("Nominal cell capacity. Used to convert between current and C-rate."),
         examples=[5.0],
     )
     ambient_temperature: FloatInt = Field(
@@ -184,9 +182,7 @@ class Electrolyte(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
-        description=(
-            "Lithium ion diffusivity in electrolyte (constant or function of concentration)"
-        ),
+        description=("Lithium ion diffusivity in electrolyte (constant or function of concentration)"),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -197,9 +193,7 @@ class Electrolyte(ExtraBaseModel):
     conductivity: FloatFunctionTable = Field(
         alias="Conductivity [S.m-1]",
         examples=[1.0],
-        description=(
-            "Electrolyte conductivity (constant or function of concentration)"
-        ),
+        description=("Electrolyte conductivity (constant or function of concentration)"),
     )
     conductivity_activation_energy: FloatInt = Field(
         None,
@@ -271,9 +265,7 @@ class Particle(ExtraBaseModel):
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["3.3e-14"],
-        description=(
-            "Lithium ion diffusivity in particle (constant or function of stoichiometry)"
-        ),
+        description=("Lithium ion diffusivity in particle (constant or function of stoichiometry)"),
     )
     diffusivity_activation_energy: FloatInt = Field(
         None,
@@ -284,9 +276,7 @@ class Particle(ExtraBaseModel):
     ocp: FloatFunctionTable = Field(
         alias="OCP [V]",
         examples=[{"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]}],
-        description=(
-            "Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"
-        ),
+        description=("Open-circuit potential (OCP) at the reference temperature, function of particle stoichiometry"),
     )
     ocp_delith: FloatFunctionTable = Field(
         None,
@@ -339,9 +329,7 @@ class Electrode(Contact):
     conductivity: FloatInt = Field(
         alias="Conductivity [S.m-1]",
         examples=[0.18],
-        description=(
-            "Effective electronic conductivity of the porous electrode matrix (constant)"
-        ),
+        description=("Effective electronic conductivity of the porous electrode matrix (constant)"),
     )
 
 
@@ -438,6 +426,86 @@ class Experiment(ExtraBaseModel):
     )
 
 
+class ParameterisationPartial(ExtraBaseModel):
+    """
+    A class to store parameterisation data for a cell. Consists of parameters for the
+    cell, electrolyte, negative electrode, positive electrode, and separator.
+    All parameter groups are optional to allow for partial parameterisations; as such either
+    SPM or full models can be represented (but not within the same instance).
+    """
+
+    cell: Cell = Field(
+        None,
+        alias="Cell",
+    )
+    electrolyte: Electrolyte = Field(
+        None,
+        alias="Electrolyte",
+    )
+    negative_electrode: Union[
+        ElectrodeSingle,
+        ElectrodeBlended,
+        ElectrodeSingleSPM,
+        ElectrodeBlendedSPM,
+    ] = Field(
+        None,
+        alias="Negative electrode",
+    )
+    positive_electrode: Union[
+        ElectrodeSingle,
+        ElectrodeBlended,
+        ElectrodeSingleSPM,
+        ElectrodeBlendedSPM,
+    ] = Field(
+        None,
+        alias="Positive electrode",
+    )
+    separator: Contact = Field(
+        None,
+        alias="Separator",
+    )
+    user_defined: UserDefined = Field(
+        None,
+        alias="User-defined",
+    )
+
+    @field_validator("negative_electrode", "positive_electrode", mode="before")
+    @classmethod
+    def _choose_electrode_type(cls, data: dict) -> dict:
+        """Use the 'conductivity' parameter to differentiate between SPM and full electrode types."""
+        if data.get("Particle") and data.get("Conductivity [S.m-1]"):
+            return ElectrodeBlended.model_validate(data)
+        if data.get("Particle"):
+            return ElectrodeBlendedSPM.model_validate(data)
+        if data.get("Conductivity [S.m-1]"):
+            return ElectrodeSingle.model_validate(data)
+        return ElectrodeSingleSPM.model_validate(data)
+
+    @model_validator(mode="after")
+    def _check_consistent_electrode_types(self) -> Parameterisation:
+        if self.negative_electrode and self.positive_electrode:
+            neg_is_spm = isinstance(
+                self.negative_electrode,
+                (ElectrodeSingleSPM | ElectrodeBlendedSPM),
+            )
+            pos_is_spm = isinstance(
+                self.positive_electrode,
+                (ElectrodeSingleSPM | ElectrodeBlendedSPM),
+            )
+            if neg_is_spm != pos_is_spm:
+                error_msg = (
+                    "Negative and positive electrodes must be of consistent model types. Currently types are: "
+                    f"Positive electrode: {type(self.positive_electrode)}, "
+                    f"Negative electrode: {type(self.negative_electrode)}"
+                )
+                raise ValueError(error_msg)
+        return self
+
+    @model_validator(mode="after")
+    def _sto_limit_validation(self) -> Parameterisation:
+        return check_sto_limits(self)
+
+
 class Parameterisation(ExtraBaseModel):
     """
     A class to store parameterisation data for a cell. Consists of parameters for the
@@ -518,7 +586,7 @@ class BPX(ExtraBaseModel):
     header: Header = Field(
         alias="Header",
     )
-    parameterisation: Union[ParameterisationSPM, Parameterisation] = Field(
+    parameterisation: Union[ParameterisationSPM, Parameterisation, ParameterisationPartial] = Field(
         alias="Parameterisation",
     )
     validation: dict[str, Experiment] = Field(None, alias="Validation")
@@ -531,11 +599,18 @@ class BPX(ExtraBaseModel):
             header = Header.model_validate(data.get("Header"))
             model_type = header.model
 
+            if model_type == "Partial":
+                parameterisation = ParameterisationPartial.model_validate(data["Parameterisation"])
+                # return validated data to stop double validation
+                data["Header"] = header
+                data["Parameterisation"] = parameterisation
+                return data
+
             # Choose the expected class based on model type
             if model_type == "SPM":
                 expected_cls, fallback_cls = ParameterisationSPM, Parameterisation
                 error_msg = f"Valid parameter set does not correspond with the model type {model_type}"
-            else:
+            else:  # DFN or SPMe
                 expected_cls, fallback_cls = Parameterisation, ParameterisationSPM
                 error_msg = f"Valid SPM parameter set does not correspond with the model type {model_type}"
 
