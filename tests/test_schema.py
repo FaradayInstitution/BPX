@@ -239,6 +239,63 @@ class TestSchema(unittest.TestCase):
             },
         }
 
+        # partial DFN model
+        self.partial: dict[str, Any] = {
+            "Header": {
+                "BPX": "1.0.0",
+                "Model": "Partial",
+            },
+            "Parameterisation": {
+                "Negative electrode": {
+                    "Particle radius [m]": 5.86e-6,
+                    "Thickness [m]": 85.2e-6,
+                    "Diffusivity [m2.s-1]": 3.3e-14,
+                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                    "Conductivity [S.m-1]": 215.0,
+                    "Surface area per unit volume [m-1]": 383959,
+                    "Porosity": 0.25,
+                    "Transport efficiency": 0.125,
+                    "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                    "Maximum concentration [mol.m-3]": 33133,
+                    "Minimum stoichiometry": 0.01,
+                    "Maximum stoichiometry": 0.99,
+                },
+                "Positive electrode": {
+                    "Thickness [m]": 75.6e-6,
+                    "Conductivity [S.m-1]": 0.18,
+                    "Porosity": 0.335,
+                    "Transport efficiency": 0.1939,
+                    "Particle": {
+                        "Primary": {
+                            "Particle radius [m]": 5.22e-6,
+                            "Diffusivity [m2.s-1]": 4.0e-15,
+                            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                            "Surface area per unit volume [m-1]": 382184,
+                            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                            "Maximum concentration [mol.m-3]": 63104.0,
+                            "Minimum stoichiometry": 0.1,
+                            "Maximum stoichiometry": 0.9,
+                        },
+                        "Secondary": {
+                            "Particle radius [m]": 10.0e-6,
+                            "Diffusivity [m2.s-1]": 4.0e-15,
+                            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                            "Surface area per unit volume [m-1]": 382184,
+                            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                            "Maximum concentration [mol.m-3]": 63104.0,
+                            "Minimum stoichiometry": 0.1,
+                            "Maximum stoichiometry": 0.9,
+                        },
+                    },
+                },
+                "Separator": {
+                    "Thickness [m]": 1.2e-5,
+                    "Porosity": 0.47,
+                    "Transport efficiency": 0.3222,
+                },
+            },
+        }
+
     def test_simple(self) -> None:
         test = copy.deepcopy(self.base)
         adapter.validate_python(test)
@@ -261,7 +318,7 @@ class TestSchema(unittest.TestCase):
     def test_bad_model(self) -> None:
         test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "Wrong model type"
-        with pytest.raises(ValidationError, match="Input should be 'SPM', 'SPMe' or 'DFN'"):
+        with pytest.raises(ValidationError, match="Input should be 'SPM', 'SPMe', 'DFN' or 'Partial'"):
             adapter.validate_python(test)
 
     def test_bad_dfn(self) -> None:
@@ -614,6 +671,69 @@ class TestSchema(unittest.TestCase):
         with pytest.raises(
             ValidationError,
             match=re.escape("'State.Degradation.LAM: Positive electrode' keys must exactly match"),
+        ):
+            adapter.validate_python(test)
+
+    def test_simple_partial_set(self) -> None:
+        test = copy.deepcopy(self.partial)
+        adapter.validate_python(test)
+
+    def test_invalid_simple_partial_set(self) -> None:
+        test = copy.deepcopy(self.partial)
+        test["Cell"] = {"bad_field": 123}
+
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            adapter.validate_python(test)
+
+    def test_partial_mismatched_electrodes(self) -> None:
+        test = copy.deepcopy(self.partial)
+        # Replace with a valid SPM electrode
+        test["Parameterisation"]["Negative electrode"] = {
+            "Particle radius [m]": 5.86e-6,
+            "Thickness [m]": 85.2e-6,
+            "Diffusivity [m2.s-1]": 3.3e-14,
+            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+            "Surface area per unit volume [m-1]": 383959,
+            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+            "Maximum concentration [mol.m-3]": 33133,
+            "Minimum stoichiometry": 0.01,
+            "Maximum stoichiometry": 0.99,
+        }
+
+        with pytest.raises(
+            ValidationError,
+            match=re.escape(
+                "Negative and positive electrodes must be of consistent model types. "
+                "Currently types are: Positive electrode: <class 'bpx.schema.ElectrodeBlended'>, "
+                "Negative electrode: <class 'bpx.schema.ElectrodeSingleSPM'>",
+            ),
+        ):
+            adapter.validate_python(test)
+
+        # replace with valid blended SPM electrode
+        test["Parameterisation"]["Negative electrode"] = {
+            "Thickness [m]": 75.6e-6,
+            "Particle": {
+                "Primary": {
+                    "Particle radius [m]": 5.22e-6,
+                    "Diffusivity [m2.s-1]": 4.0e-15,
+                    "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+                    "Surface area per unit volume [m-1]": 382184,
+                    "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+                    "Maximum concentration [mol.m-3]": 63104.0,
+                    "Minimum stoichiometry": 0.1,
+                    "Maximum stoichiometry": 0.9,
+                },
+            },
+        }
+
+        with pytest.raises(
+            ValidationError,
+            match=re.escape(
+                "Negative and positive electrodes must be of consistent model types. "
+                "Currently types are: Positive electrode: <class 'bpx.schema.ElectrodeBlended'>, "
+                "Negative electrode: <class 'bpx.schema.ElectrodeBlendedSPM'>",
+            ),
         ):
             adapter.validate_python(test)
 
