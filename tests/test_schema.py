@@ -737,6 +737,28 @@ class TestSchema(unittest.TestCase):
         ):
             adapter.validate_python(test)
 
+    def test_partial_dfn_with_spm_electrodes(self) -> None:
+        test = copy.deepcopy(self.partial)
+        # Replace with one valid SPM electrode
+        test["Parameterisation"]["Positive electrode"] = {
+            "Particle radius [m]": 5.86e-6,
+            "Thickness [m]": 85.2e-6,
+            "Diffusivity [m2.s-1]": 3.3e-14,
+            "OCP [V]": {"x": [0, 0.1, 1], "y": [1.72, 1.2, 0.06]},
+            "Surface area per unit volume [m-1]": 383959,
+            "Reaction rate constant [mol.m-2.s-1]": 1e-10,
+            "Maximum concentration [mol.m-3]": 33133,
+            "Minimum stoichiometry": 0.01,
+            "Maximum stoichiometry": 0.99,
+        }
+        del test["Parameterisation"]["Negative electrode"]
+
+        with pytest.raises(
+            ValidationError,
+            match=re.escape("SPM electrodes cannot be used with full model parameters ['electrolyte', 'separator']"),
+        ):
+            adapter.validate_python(test)
+
 
 if __name__ == "__main__":
     unittest.main()

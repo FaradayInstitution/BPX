@@ -523,6 +523,29 @@ class ParameterisationPartial(ExtraBaseModel):
         return self
 
     @model_validator(mode="after")
+    def _check_consistent_electrode_models(self) -> Parameterisation:
+        """Check that if SPM electrodes are used, no full model parameters are present."""
+        neg_is_spm = self.negative_electrode and isinstance(
+            self.negative_electrode,
+            (ElectrodeSingleSPM | ElectrodeBlendedSPM),
+        )
+        pos_is_spm = self.positive_electrode and isinstance(
+            self.positive_electrode,
+            (ElectrodeSingleSPM | ElectrodeBlendedSPM),
+        )
+
+        if any([neg_is_spm, pos_is_spm]):
+            full_model_params = Parameterisation.model_fields.keys() - ParameterisationSPM.model_fields.keys()
+            if any(field in self.model_fields_set for field in full_model_params):
+                error_msg = (
+                    f"SPM electrodes cannot be used with full model parameters {sorted(full_model_params)}. "
+                    "Please ensure that either full model electrodes are used, or that "
+                    "only valid SPM parameters are provided."
+                )
+                raise ValueError(error_msg)
+        return self
+
+    @model_validator(mode="after")
     def _sto_limit_validation(self) -> Parameterisation:
         return check_sto_limits(self)
 
