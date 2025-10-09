@@ -1,3 +1,7 @@
+# [Unreleased](https://github.com/FaradayInstitution/BPX)
+
+- Added `partial` model option to allow partial schemas to be defined in `Parameterisation`. ([#115](https://github.com/FaradayInstitution/BPX/pull/115))
+
 # [v0.5.0](https://github.com/FaradayInstitution/BPX/releases/tag/v0.5.0)
 
 - Bug fixes for Pydantic ([#81](https://github.com/FaradayInstitution/BPX/pull/81))
