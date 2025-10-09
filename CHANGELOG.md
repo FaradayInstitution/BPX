@@ -1,3 +1,8 @@
+# [Unreleased](https://github.com/FaradayInstitution/BPX)
+
+- Added `State` section to the schema and moved temperature & concentration parameters
+from `Parameterisation` in. ([#113](https://github.com/FaradayInstitution/BPX/pull/113))
+
 # [v0.5.0](https://github.com/FaradayInstitution/BPX/releases/tag/v0.5.0)
 
 - Bug fixes for Pydantic ([#81](https://github.com/FaradayInstitution/BPX/pull/81))
