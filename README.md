@@ -8,7 +8,7 @@ This repository features a Pydantic-based parser for JSON files in the BPX forma
 
 To support the new open standard, [About:Energy](https://www.aboutenergy.io/) have supplied two parameter sets for an NMC and LFP cell. The BPX files and associated examples and information can be found on the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/).
 
-To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX example notebook]([https://github.com/pybamm-team/bpx-example](https://github.com/pybamm-team/PyBaMM/blob/1ead6c512a6cff3effaa35f47efb354ec4a3c8c8/docs/source/examples/notebooks/parameterization/bpx.ipynb)).
+To see how to use BPX with [PyBaMM](https://www.pybamm.org/), check out the [BPX example notebook](https://github.com/pybamm-team/PyBaMM/blob/develop/docs/source/examples/notebooks/parameterization/bpx.ipynb).
 
 ## 🚀 Installation
 The BPX package can be installed using pip
@@ -33,17 +33,17 @@ import bpx
 filename = 'path/to/my/file.json'
 my_params = bpx.parse_bpx_file(filename)
 ```
-`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obtain example files, see the `examples` folder, the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/), or the [BPX example repository](https://github.com/pybamm-team/bpx-example).
+`my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obtain example files, see the `examples` folder, or the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/).
 
-Attributes of the class can be printed out using the standard Python dot notation, for example, you can print out the initial temperature of the cell using
+Attributes of the class can be printed out using the standard Python dot notation, for example, you can print out the reference temperature of the cell using
 ```python
-print('Initial temperature of cell:', my_params.parameterisation.cell.initial_temperature)
+print('Reference temperature of cell:', my_params.parameterisation.cell.reference_temperature)
 ```
 
 Alternatively, you can export the `BPX` object as a dictionary and use the string names (aliases) of the parameters from the standard
 ```python
 my_params_dict = my_params.model_dump(by_alias=True)
-print('Initial temperature of cell:', my_params_dict["Parameterisation"]["Cell"]["Initial temperature [K]"])
+print('Reference temperature of cell:', my_params_dict["Parameterisation"]["Cell"]["Reference temperature [K]"])
 ```
 
 The entire BPX object can be pretty-printed using the `devtools` package 
