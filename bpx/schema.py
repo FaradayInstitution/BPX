@@ -15,7 +15,7 @@ from pydantic import (
 from bpx import Function, InterpolatedTable
 
 from .base_extra_model import ExtraBaseModel
-from .schema_utils import get_materials_in_electrode, validate_section_against_electrodes
+from .schema_utils import BPXSchemaError, get_materials_in_electrode, validate_section_against_electrodes
 from .validators import check_sto_limits
 
 FloatFunctionTable = Union[float, int, Function, InterpolatedTable]
@@ -709,7 +709,7 @@ class BPX(ExtraBaseModel):
     parameterisation: Union[ParameterisationSPM, Parameterisation, ParameterisationPartial] = Field(
         alias="Parameterisation",
     )
-    state: State = Field(alias="State")
+    state: State = Field(None, alias="State")
     validation: dict[str, Experiment] = Field(None, alias="Validation")
 
     @model_validator(mode="before")
@@ -750,11 +750,24 @@ class BPX(ExtraBaseModel):
         return data
 
     @model_validator(mode="after")
+    def _check_state_present_if_not_partial(self) -> BPX:
+        """
+        Check that State is provided if not using a Partial parameterisation.
+        """
+        if self.state is None and self.header.model != "Partial":
+            err_msg = "'State' section must be provided unless using a 'Partial' parameterisation"
+            raise BPXSchemaError(err_msg)
+        return self
+
+    @model_validator(mode="after")
     def _check_state_against_blended_electrodes(self) -> BPX:
         """
         Check that if blended electrodes are used, values which require per-material
         values in State are provided as such (and vice versa).
         """
+
+        if self.state is None:
+            return self  # skip if no State provided (Partial parameterisation)
 
         param = self.parameterisation
 

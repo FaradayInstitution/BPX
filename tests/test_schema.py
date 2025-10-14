@@ -759,6 +759,15 @@ class TestSchema(unittest.TestCase):
         ):
             adapter.validate_python(test)
 
+    def test_no_state_present_not_partial_error(self) -> None:
+        test = copy.deepcopy(self.base_spm)
+        del test["State"]
+        with pytest.raises(
+            ValidationError,
+            match=re.escape("'State' section must be provided unless using a 'Partial' parameterisation"),
+        ):
+            adapter.validate_python(test)
+
 
 if __name__ == "__main__":
     unittest.main()
