@@ -1,5 +1,6 @@
 # [Unreleased](https://github.com/FaradayInstitution/BPX)
 
+- Added `partial` model option to allow partial schemas to be defined in `Parameterisation`. ([#115](https://github.com/FaradayInstitution/BPX/pull/115))
 - Added `State` section to the schema and moved temperature & concentration parameters
 from `Parameterisation` in. ([#113](https://github.com/FaradayInstitution/BPX/pull/113))
 
