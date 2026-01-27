@@ -688,7 +688,7 @@ class State(ExtraBaseModel):
     )
 
     thermal_state: ThermalState = Field(
-        alias="Thermal state",
+        alias="Thermal environment",
     )
 
     degradation: Degradation = Field(
