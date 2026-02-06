@@ -94,7 +94,7 @@ class TestSchema(unittest.TestCase):
                         "Secondary": 10,
                     },
                 },
-                "Thermal state": {
+                "Thermal environment": {
                     "Ambient temperature [K]": 299,
                     "Heat transfer coefficient [W.m-2.K-1]": 10.0,
                 },
@@ -166,7 +166,7 @@ class TestSchema(unittest.TestCase):
                     },
                     "Initial hysteresis state: Negative electrode": 5,
                 },
-                "Thermal state": {
+                "Thermal environment": {
                     "Ambient temperature [K]": 299,
                     "Heat transfer coefficient [W.m-2.K-1]": 10.0,
                 },
@@ -232,7 +232,7 @@ class TestSchema(unittest.TestCase):
                     "Initial hysteresis state: Positive electrode": 10,
                     "Initial hysteresis state: Negative electrode": 5,
                 },
-                "Thermal state": {
+                "Thermal environment": {
                     "Ambient temperature [K]": 299,
                     "Heat transfer coefficient [W.m-2.K-1]": 10.0,
                 },
