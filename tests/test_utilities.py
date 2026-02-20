@@ -74,7 +74,7 @@ class TestUtlilities(unittest.TestCase):
                     "Initial hysteresis state: Negative electrode": 5,
                     "Initial hysteresis state: Positive electrode": 10,
                 },
-                "Thermal state": {
+                "Thermal environment": {
                     "Ambient temperature [K]": 299,
                     "Heat transfer coefficient [W.m-2.K-1]": 10.0,
                 },

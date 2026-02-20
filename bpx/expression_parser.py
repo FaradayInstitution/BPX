@@ -64,4 +64,4 @@ class ExpressionParser:
 
     def parse_string(self, model_str: str, *, parse_all: bool = True) -> None:
         self.expr_stack = []
-        self.parser.parseString(model_str, parseAll=parse_all)
+        self.parser.parse_string(model_str, parse_all=parse_all)
