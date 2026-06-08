@@ -16,9 +16,6 @@ from __future__ import annotations
 import copy
 import re
 
-# Electrode prefixes for the synthesised hysteresis state.
-_ELECTRODES = ("Negative", "Positive")
-
 
 def _first_not_none(*values: float | None, default: float) -> float:
     """Return the first value that is not ``None``, or ``default`` if all are."""
@@ -68,14 +65,15 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
     (the input is not mutated).
 
     The v1.x ``State`` block is synthesised from the v0.x ``Parameterisation``
-    entries, with placeholders for the required fields v0.x lacks: initial SOC
-    set to ``1``, heat transfer coefficient and initial hysteresis state set to
-    ``0`` (the lumped ``Thermal conductivity`` has no v1.x equivalent and is
-    dropped), the ambient and initial temperatures resolved from whichever of
-    ambient/initial/reference temperature the file provides (defaulting to
-    ``298.15`` K only if none are present), and initial electrolyte concentration
-    falling back to ``1000`` mol.m-3 (1 M) when absent (e.g. SPM files that have
-    no ``Electrolyte`` section). Cross-version semantic changes are not adjusted.
+    entries: initial SOC is set to ``1``; the ambient and initial temperatures are
+    resolved from whichever of ambient/initial/reference temperature the file
+    provides (defaulting to ``298.15`` K only if none are present); and the initial
+    electrolyte concentration is carried across when present (the lumped
+    ``Thermal conductivity`` has no v1.x equivalent and is dropped). Fields that are
+    optional in v1.x and have no v0.x equivalent (initial hysteresis state, heat
+    transfer coefficient, and the electrolyte concentration for SPM files with no
+    ``Electrolyte`` section) are omitted rather than synthesised, leaving simulators
+    to apply their own defaults. Cross-version semantic changes are not adjusted.
     """
     params = copy.deepcopy(bpx_obj)
     parameterisation = params.get("Parameterisation", {})
@@ -102,27 +100,22 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
         "Initial temperature [K]": initial_temperature,
     }
 
-    # Required in v1.x; fall back to 1 M when absent (e.g. SPM files with no
-    # Electrolyte section). See https://github.com/FaradayInstitution/BPX/issues/127.
+    # Optional in v1.x, but renamed and moved out of Electrolyte, so carry across
+    # any value the v0.x file provides. SPM files have no Electrolyte section and
+    # the field is simply omitted (simulators supply their own default).
+    # See https://github.com/FaradayInstitution/BPX/issues/127.
     initial_electrolyte_concentration = electrolyte.pop(
         "Initial concentration [mol.m-3]",
         None,
     )
-    initial_conditions["Initial electrolyte concentration [mol.m-3]"] = (
-        initial_electrolyte_concentration if initial_electrolyte_concentration is not None else 1000
-    )
+    if initial_electrolyte_concentration is not None:
+        initial_conditions["Initial electrolyte concentration [mol.m-3]"] = initial_electrolyte_concentration
 
-    # Placeholder hysteresis state; blended electrodes need a per-phase dict.
-    for electrode in _ELECTRODES:
-        electrode_params = parameterisation.get(f"{electrode} electrode", {})
-        key = f"Initial hysteresis state: {electrode} electrode"
-        if "Particle" in electrode_params:
-            initial_conditions[key] = dict.fromkeys(electrode_params["Particle"], 0)
-        else:
-            initial_conditions[key] = 0
-
+    # Initial hysteresis state and heat transfer coefficient are optional in v1.x
+    # and have no v0.x equivalent, so they are left for the simulator to default
+    # rather than synthesised here. See
+    # https://github.com/FaradayInstitution/BPX/issues/126.
     thermal_environment: dict = {
-        "Heat transfer coefficient [W.m-2.K-1]": 0,
         "Ambient temperature [K]": ambient_temperature,
     }
 

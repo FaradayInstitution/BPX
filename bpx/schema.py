@@ -15,7 +15,7 @@ from pydantic import (
 from bpx import Function, InterpolatedTable
 
 from .base_extra_model import ExtraBaseModel
-from .schema_utils import BPXSchemaError, get_materials_in_electrode, validate_section_against_electrodes
+from .schema_utils import get_materials_in_electrode, validate_section_against_electrodes
 from .validators import check_sto_limits
 
 FloatFunctionTable = Union[float, int, Function, InterpolatedTable]
@@ -622,31 +622,36 @@ class ParameterisationSPM(ExtraBaseModel):
 
 
 class InitialConditions(ExtraBaseModel):
-    initial_soc: FloatInt = Field(
+    initial_soc: FloatInt | None = Field(
+        None,
         alias="Initial state-of-charge",
         examples=[0.5],
         description=("Initial state of charge of the battery (between 0 and 1)"),
     )
 
-    initial_temperature: FloatInt = Field(
+    initial_temperature: FloatInt | None = Field(
+        None,
         alias="Initial temperature [K]",
         examples=[298.15],
     )
 
-    initial_electrolyte_concentration: FloatInt = Field(
+    initial_electrolyte_concentration: FloatInt | None = Field(
+        None,
         alias="Initial electrolyte concentration [mol.m-3]",
         examples=[1000],
         description=("Initial / rest lithium ion concentration in the electrolyte"),
     )
 
-    initial_hysteresis_state_positive: FloatInt | dict[str, FloatInt] = Field(
+    initial_hysteresis_state_positive: FloatInt | dict[str, FloatInt] | None = Field(
+        None,
         alias="Initial hysteresis state: Positive electrode",
         examples=[1.0, {"Primary": 1.0, "Secondary": 5.0}],
         description=("Initial hysteresis state for positive electrode"),
         json_schema_extra={"material_check": "positive_electrode"},
     )
 
-    initial_hysteresis_state_negative: FloatInt | dict[str, FloatInt] = Field(
+    initial_hysteresis_state_negative: FloatInt | dict[str, FloatInt] | None = Field(
+        None,
         alias="Initial hysteresis state: Negative electrode",
         examples=[1.0, {"Primary": 1.0, "Secondary": 5.0}],
         description=("Initial hysteresis state for negative electrode"),
@@ -655,12 +660,14 @@ class InitialConditions(ExtraBaseModel):
 
 
 class ThermalState(ExtraBaseModel):
-    ambient_temperature: FloatInt = Field(
+    ambient_temperature: FloatInt | None = Field(
+        None,
         alias="Ambient temperature [K]",
         examples=[298.15],
     )
 
-    heat_transfer_coefficient: FloatInt = Field(
+    heat_transfer_coefficient: FloatInt | None = Field(
+        None,
         alias="Heat transfer coefficient [W.m-2.K-1]",
         examples=[10.0],
     )
@@ -683,11 +690,13 @@ class Degradation(ExtraBaseModel):
 
 
 class State(ExtraBaseModel):
-    initial_conditions: InitialConditions = Field(
+    initial_conditions: InitialConditions | None = Field(
+        None,
         alias="Initial conditions",
     )
 
-    thermal_environment: ThermalState = Field(
+    thermal_environment: ThermalState | None = Field(
+        None,
         alias="Thermal environment",
     )
 
@@ -750,16 +759,6 @@ class BPX(ExtraBaseModel):
         return data
 
     @model_validator(mode="after")
-    def _check_state_present_if_not_partial(self) -> BPX:
-        """
-        Check that State is provided if not using a Partial parameterisation.
-        """
-        if self.state is None and self.header.model != "Partial":
-            err_msg = "'State' section must be provided unless using a 'Partial' parameterisation"
-            raise BPXSchemaError(err_msg)
-        return self
-
-    @model_validator(mode="after")
     def _check_state_against_blended_electrodes(self) -> BPX:
         """
         Check that if blended electrodes are used, values which require per-material
@@ -767,7 +766,7 @@ class BPX(ExtraBaseModel):
         """
 
         if self.state is None:
-            return self  # skip if no State provided (Partial parameterisation)
+            return self  # nothing to check if State is omitted
 
         param = self.parameterisation
 
@@ -776,16 +775,17 @@ class BPX(ExtraBaseModel):
             "positive_electrode": get_materials_in_electrode(param.positive_electrode),
         }
 
+        # Either section may be omitted (it is optional); validate_section_against_electrodes
+        # tolerates a None section.
         validate_section_against_electrodes(
             self.state.initial_conditions,
             "Initial conditions",
             electrode_materials,
         )
-        if self.state.degradation is not None:
-            validate_section_against_electrodes(
-                self.state.degradation,
-                "Degradation",
-                electrode_materials,
-            )
+        validate_section_against_electrodes(
+            self.state.degradation,
+            "Degradation",
+            electrode_materials,
+        )
 
         return self

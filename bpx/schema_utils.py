@@ -46,7 +46,13 @@ def _validate_value_against_keys(
 
     `expected_keys` is None for single-material electrodes (`value` must be scalar),
     or a set[str] for blended electrodes (`value` must be dict with `expected_keys`).
+
+    A `value` of None means the (optional) field was not provided, so there is
+    nothing to check against the electrode materials.
     """
+    if value is None:
+        return
+
     if expected_keys is None:
         # single-material: require scalar
         if isinstance(value, dict):
@@ -72,7 +78,7 @@ def _validate_value_against_keys(
 
 
 def validate_section_against_electrodes(
-    section_model: ExtraBaseModel,
+    section_model: ExtraBaseModel | None,
     section_label: str,
     electrode_materials: dict[str, set[str] | None],
 ) -> None:
@@ -82,6 +88,9 @@ def validate_section_against_electrodes(
     Assumes that fields which need to be checked are tagged with 'material_check' in their
     json_schema_extra metadata, with value 'negative_electrode' or 'positive_electrode'.
 
+    A `section_model` of None means the (optional) section was not provided, so there
+    is nothing to validate.
+
     E.g. for a single field:
 
     lam_positive: FloatInt | dict[str, FloatInt] = Field(
@@ -89,6 +98,9 @@ def validate_section_against_electrodes(
         json_schema_extra={"material_check": "positive_electrode"},
     )
     """
+    if section_model is None:
+        return
+
     for alias, value, tag in _find_tagged_fields(section_model):
         _validate_value_against_keys(
             value,
