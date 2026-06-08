@@ -1,5 +1,11 @@
 # [Unreleased](https://github.com/FaradayInstitution/BPX)
 
+# [v1.1.1](https://github.com/FaradayInstitution/BPX/releases/tag/v1.1.1)
+
+- Added backward-compatible loading of legacy BPX v0.x files: `parse_bpx_file`, `parse_bpx_obj` and `parse_bpx_str` now detect a v0.x object and convert it to the v1.x schema on a best-effort basis, raising a `UserWarning`. Conversion can be disabled with `convert_legacy=False`. The converter is also exposed directly as `bpx.convert_v0_to_v1` / `bpx.is_legacy_bpx`.
+
+# [v1.1.0](https://github.com/FaradayInstitution/BPX/releases/tag/v1.1.0)
+
 - Added `partial` model option to allow partial schemas to be defined in `Parameterisation`. ([#115](https://github.com/FaradayInstitution/BPX/pull/115))
 - Added `State` section to the schema and moved temperature & concentration parameters
 from `Parameterisation` in. ([#113](https://github.com/FaradayInstitution/BPX/pull/113))
