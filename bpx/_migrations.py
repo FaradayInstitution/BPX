@@ -6,6 +6,9 @@ temperature and initial electrolyte concentration out of ``Parameterisation``,
 so v0.x files no longer validate against the current schema. These helpers
 detect a v0.x object and repack it into the v1.x layout so older files keep
 loading.
+
+Adapted from the v0.x -> v1.x converter shared by Edmund Dickinson
+(@ejfdickinson) in https://github.com/pybamm-team/PyBaMM/issues/5571.
 """
 
 from __future__ import annotations
