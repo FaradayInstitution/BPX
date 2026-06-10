@@ -1,5 +1,7 @@
 # [Unreleased](https://github.com/FaradayInstitution/BPX)
 
+- All `State` variables are now optional, leaving simulators to default any value that is not provided. This makes the initial electrolyte concentration optional (e.g. for SPM, which has no `Electrolyte` section, [#127](https://github.com/FaradayInstitution/BPX/issues/127)) and the initial hysteresis state optional (e.g. for materials with no hysteresis OCP branch, [#126](https://github.com/FaradayInstitution/BPX/issues/126)). A non-`Partial` file may now also omit the `State` section entirely. The legacy v0.x converter no longer synthesises placeholder values for these optional fields.
+
 # [v1.1.1](https://github.com/FaradayInstitution/BPX/releases/tag/v1.1.1)
 
 - Added backward-compatible loading of legacy BPX v0.x files: `parse_bpx_file`, `parse_bpx_obj` and `parse_bpx_str` now detect a v0.x object and convert it to the v1.x schema on a best-effort basis, raising a `UserWarning`. Conversion can be disabled with `convert_legacy=False`. The converter is also exposed directly as `bpx.convert_v0_to_v1` / `bpx.is_legacy_bpx`.

@@ -247,8 +247,12 @@ class TestParsers(unittest.TestCase):
         # moved fields are preserved
         assert bpx.state.thermal_environment.ambient_temperature == 299
         assert bpx.state.initial_conditions.initial_temperature == 299
-        # heat transfer coefficient is the placeholder (0), not carried from v0.x
-        assert bpx.state.thermal_environment.heat_transfer_coefficient == 0
+        # electrolyte concentration is carried across from the v0.x Electrolyte section
+        assert bpx.state.initial_conditions.initial_electrolyte_concentration == 1000
+        # optional fields with no v0.x equivalent are omitted (left to the simulator)
+        assert bpx.state.thermal_environment.heat_transfer_coefficient is None
+        assert bpx.state.initial_conditions.initial_hysteresis_state_positive is None
+        assert bpx.state.initial_conditions.initial_hysteresis_state_negative is None
 
     def test_v0_str_is_converted_with_warning(self) -> None:
         with _recorded_warnings() as records:

@@ -11,12 +11,12 @@ from .schema import BPX
 
 _LEGACY_CONVERSION_WARNING = (
     "Detected a legacy BPX v0.x file/object; converting to the v1.x schema for "
-    "backward compatibility. The conversion is approximate: the required 'State' "
-    "fields are synthesised with placeholders (heat transfer coefficient and "
-    "initial hysteresis state set to 0, initial electrolyte concentration "
-    "defaulted to 1000 mol.m-3 when absent, lumped thermal conductivity dropped) "
-    "and cross-version semantic changes are not corrected. Re-export from bpx>=1 "
-    "to silence this warning, or pass convert_legacy=False to disable conversion."
+    "backward compatibility. The conversion is approximate: the 'State' block is "
+    "synthesised from the v0.x parameterisation (initial SOC set to 1, ambient and "
+    "initial temperatures resolved from those provided, lumped thermal conductivity "
+    "dropped), optional fields with no v0.x equivalent are left for the simulator to "
+    "default, and cross-version semantic changes are not corrected. Re-export from "
+    "bpx>=1 to silence this warning, or pass convert_legacy=False to disable conversion."
 )
 
 
