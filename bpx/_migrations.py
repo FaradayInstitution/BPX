@@ -124,6 +124,11 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
         "Thermal environment": thermal_environment,
     }
 
-    params.setdefault("Header", {})["BPX"] = "1.0.0"
+    # Stamp the header with the current runtime version so the converted object
+    # reports the schema it now conforms to (deferred import avoids a cycle with
+    # bpx/__init__.py, which imports this module).
+    from . import __version__  # noqa: PLC0415
+
+    params.setdefault("Header", {})["BPX"] = __version__
 
     return params

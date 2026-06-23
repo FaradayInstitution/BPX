@@ -14,9 +14,12 @@ _LEGACY_CONVERSION_WARNING = (
     "backward compatibility. The conversion is approximate: the 'State' block is "
     "synthesised from the v0.x parameterisation (initial SOC set to 1, ambient and "
     "initial temperatures resolved from those provided, lumped thermal conductivity "
-    "dropped), optional fields with no v0.x equivalent are left for the simulator to "
-    "default, and cross-version semantic changes are not corrected. Re-export from "
-    "bpx>=1 to silence this warning, or pass convert_legacy=False to disable conversion."
+    "dropped). Optional v1.x fields that have no v0.x equivalent (e.g. initial "
+    "hysteresis state and heat transfer coefficient) are omitted from the converted "
+    "object rather than given a value here, so any tool that consumes it will apply "
+    "its own defaults for them. Cross-version semantic changes are not corrected. "
+    "Re-export from bpx>=1 to silence this warning, or pass convert_legacy=False to "
+    "disable conversion."
 )
 
 

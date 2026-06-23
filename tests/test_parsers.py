@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from bpx import (
+    __version__,
     convert_v0_to_v1,
     is_legacy_bpx,
     parse_bpx_file,
@@ -313,6 +314,11 @@ class TestParsers(unittest.TestCase):
         assert not is_legacy_bpx(converted)
         assert "State" in converted
         assert "Thermal conductivity [W.m-1.K-1]" not in converted["Parameterisation"]["Cell"]
+
+    def test_conversion_stamps_runtime_version(self) -> None:
+        converted = convert_v0_to_v1(self._make_v0_obj())
+        # the converted object reports the schema version it now conforms to
+        assert converted["Header"]["BPX"] == __version__
 
     def test_is_legacy_bpx_version_detection(self) -> None:
         cases = [(0.4, True), ("0.4.0", True), (1.0, False), ("1.1.0", False), (2, False)]
