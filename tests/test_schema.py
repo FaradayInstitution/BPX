@@ -759,13 +759,55 @@ class TestSchema(unittest.TestCase):
         ):
             adapter.validate_python(test)
 
-    def test_no_state_present_not_partial_error(self) -> None:
+    def test_no_state_present_allowed(self) -> None:
+        # State variables are optional (gh-126); a non-Partial file may omit State
+        # entirely and leave the simulator to default everything.
         test = copy.deepcopy(self.base_spm)
         del test["State"]
-        with pytest.raises(
-            ValidationError,
-            match=re.escape("'State' section must be provided unless using a 'Partial' parameterisation"),
-        ):
+        bpx = adapter.validate_python(test)
+        assert bpx.state is None
+
+    def test_optional_state_subsections(self) -> None:
+        # The Initial conditions and Thermal environment subsections are optional.
+        test = copy.deepcopy(self.base_spm)
+        test["State"] = {}
+        bpx = adapter.validate_python(test)
+        assert bpx.state.initial_conditions is None
+        assert bpx.state.thermal_environment is None
+
+    def test_optional_electrolyte_concentration(self) -> None:
+        # Initial electrolyte concentration is optional, e.g. for SPM (gh-127).
+        test = copy.deepcopy(self.base_spm)
+        del test["State"]["Initial conditions"]["Initial electrolyte concentration [mol.m-3]"]
+        bpx = adapter.validate_python(test)
+        assert bpx.state.initial_conditions.initial_electrolyte_concentration is None
+
+    def test_optional_hysteresis_state_blended(self) -> None:
+        # Hysteresis state is optional even for a blended electrode (gh-126): an
+        # omitted value must not trip the per-material dict check. base_spm has a
+        # blended positive electrode.
+        test = copy.deepcopy(self.base_spm)
+        del test["State"]["Initial conditions"]["Initial hysteresis state: Positive electrode"]
+        del test["State"]["Initial conditions"]["Initial hysteresis state: Negative electrode"]
+        bpx = adapter.validate_python(test)
+        assert bpx.state.initial_conditions.initial_hysteresis_state_positive is None
+        assert bpx.state.initial_conditions.initial_hysteresis_state_negative is None
+
+    def test_optional_thermal_environment_fields(self) -> None:
+        # Ambient temperature and heat transfer coefficient are optional (gh-126).
+        test = copy.deepcopy(self.base_spm)
+        del test["State"]["Thermal environment"]["Heat transfer coefficient [W.m-2.K-1]"]
+        del test["State"]["Thermal environment"]["Ambient temperature [K]"]
+        bpx = adapter.validate_python(test)
+        assert bpx.state.thermal_environment.heat_transfer_coefficient is None
+        assert bpx.state.thermal_environment.ambient_temperature is None
+
+    def test_blended_hysteresis_keys_still_checked_when_present(self) -> None:
+        # Optionality must not weaken the per-material check when a value IS given:
+        # a scalar for a blended electrode is still rejected.
+        test = copy.deepcopy(self.base_spm)
+        test["State"]["Initial conditions"]["Initial hysteresis state: Positive electrode"] = 1.0
+        with pytest.raises(ValidationError, match=re.escape("must be a dict")):
             adapter.validate_python(test)
 
 
