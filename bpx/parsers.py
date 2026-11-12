@@ -15,7 +15,7 @@ _LEGACY_CONVERSION_WARNING = (
     "synthesised from the v0.x parameterisation (initial SOC set to 1, ambient and "
     "initial temperatures resolved from those provided, lumped thermal conductivity "
     "dropped). Series resistance is set to 0 and the electrolyte thermodynamic "
-    "factor to 1 (ideal electrolyte), matching the v0.x model equations. Optional "
+    "factor to 1 (ideal electrolyte), matching the pre-v1.2 model equations. Optional "
     "v1.x fields that have no v0.x equivalent (e.g. initial hysteresis state and "
     "heat transfer coefficient) are omitted from the converted object rather than "
     "given a value here, so any tool that consumes it will apply its own defaults "

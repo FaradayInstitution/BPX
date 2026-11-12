@@ -71,7 +71,7 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
     electrolyte concentration is carried across when present (the lumped
     ``Thermal conductivity`` has no v1.x equivalent and is dropped). The v1.2
     ``Series resistance [Ohm]`` and ``Thermodynamic factor`` are set to ``0`` and
-    ``1`` respectively, which reproduces the v0.x model equations. Fields that are
+    ``1`` respectively, which reproduces the pre-v1.2 model equations. Fields that are
     optional in v1.x and have no v0.x equivalent (initial hysteresis state, heat
     transfer coefficient, and the electrolyte concentration for SPM files with no
     ``Electrolyte`` section) are omitted rather than synthesised, leaving simulators
@@ -98,7 +98,7 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
     cell.pop("Thermal conductivity [W.m-1.K-1]", None)
 
     # v1.2 added a series resistance (eq. 39) and an electrolyte thermodynamic
-    # factor (eq. 15), both required. v0.x equations omit both terms, which is
+    # factor (eq. 15), both required. Pre-v1.2 equations omit both terms, which is
     # equivalent to Rs = 0 and an ideal electrolyte (f_gamma = 1).
     cell.setdefault("Series resistance [Ohm]", 0)
     if "Electrolyte" in parameterisation:

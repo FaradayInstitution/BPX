@@ -161,8 +161,8 @@ class Cell(ExtraBaseModel):
     )
     series_resistance: FloatFunctionTable = Field(
         alias="Series resistance [Ohm]",
-        examples=[1.5],
-        description="Series resistance (function of temperature)",
+        examples=[0.005],
+        description="Series resistance (constant or function of temperature)",
     )
 
     @model_validator(mode="before")
@@ -211,7 +211,8 @@ class Electrolyte(ExtraBaseModel):
     )
     thermodynamic_factor: FloatFunctionTable = Field(
         alias="Thermodynamic factor",
-        description=("Thermodynamic factor"),
+        examples=[1.0],
+        description="Thermodynamic factor",
     )
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
