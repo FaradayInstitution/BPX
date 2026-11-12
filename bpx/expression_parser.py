@@ -28,14 +28,14 @@ class ExpressionParser:
 
         expr = pp.Forward()
 
-        expr_list = pp.delimitedList(pp.Group(expr))
+        expr_list = pp.DelimitedList(pp.Group(expr))
 
         def insert_fn_argcount_tuple(t: tuple) -> None:
             fn = t.pop(0)
             num_args = len(t[0])
             t.insert(0, (fn, num_args))
 
-        fn_call = (fn_ident + lpar - pp.Group(expr_list) + rpar).setParseAction(insert_fn_argcount_tuple)
+        fn_call = (fn_ident + lpar - pp.Group(expr_list) + rpar).set_parse_action(insert_fn_argcount_tuple)
 
         atom = (
             addop[...] + ((fn_call | fnumber | ident).set_parse_action(self.push_first) | pp.Group(lpar + expr + rpar))

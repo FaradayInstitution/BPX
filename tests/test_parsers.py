@@ -39,9 +39,10 @@ class TestParsers(unittest.TestCase):
         base = """
             {
                 "Header": {
-                        "BPX": "1.0.0",
+                        "BPX": "1.2.0",
                         "Title": "Parameterisation example of an NMC111|graphite 12.5 Ah pouch cell",
-                        "Model": "DFN"
+                        "Model": "DFN",
+                        "Macroscopic dimensionality": 1
                 },
                 "Parameterisation": {
                         "Cell": {
@@ -54,7 +55,8 @@ class TestParsers(unittest.TestCase):
                             "Electrode area [m2]": 0.016808,
                             "Number of electrode pairs connected in parallel to make a cell": 34,
                             "External surface area [m2]": 0.0379,
-                            "Volume [m3]": 0.000128
+                            "Volume [m3]": 0.000128,
+                            "Series resistance [Ohm]": 1.5
                         },
                         "Electrolyte": {
                             "Cation transference number": 0.2594,
@@ -62,7 +64,8 @@ class TestParsers(unittest.TestCase):
                                 "0.1297 * (x / 1000) ** 3 - 2.51 * (x / 1000) ** 1.5 + 3.329 * (x / 1000)",
                             "Diffusivity [m2.s-1]": "8.794e-11 * (x / 1000) ** 2 - 3.972e-10 * (x / 1000) + 4.862e-10",
                             "Conductivity activation energy [J.mol-1]": 17100,
-                            "Diffusivity activation energy [J.mol-1]": 17100
+                            "Diffusivity activation energy [J.mol-1]": 17100,
+                            "Thermodynamic factor": 1.0
                         },
                         "Negative electrode": {
                             "Particle radius [m]": 4.12e-06,
@@ -172,20 +175,20 @@ class TestParsers(unittest.TestCase):
             test = copy.copy(self.base)
             parse_bpx_str(test, v_tol=0.002)
 
-    def test_thermal_conductivity_error(self) -> None:
-        """Test that providing thermal_conductivity in Cell section raises an error."""
-        test = copy.copy(self.base)
-        # Add thermal conductivity to the Cell section
-        test = test.replace(
+    def test_thermal_conductivity_dfn_only(self) -> None:
+        """Thermal conductivity is accepted in the Cell section for DFN only."""
+        test = self.base.replace(
             '"Specific heat capacity [J.K-1.kg-1]": 913,',
             '"Specific heat capacity [J.K-1.kg-1]": 913, "Thermal conductivity [W.m-1.K-1]": 2.04,',
         )
+        bpx = parse_bpx_str(test, v_tol=0.002)
+        assert bpx.parameterisation.cell.thermal_conductivity == 2.04
 
-        with pytest.raises(
-            ValueError,
-            match="The 'Thermal conductivity \\[W\\.m-1\\.K-1\\]' field is not part of the BPX schema",
-        ):
-            parse_bpx_str(test)
+        spme = json.loads(test)
+        spme["Header"]["Model"] = "SPMe"
+        del spme["Header"]["Macroscopic dimensionality"]
+        with pytest.raises(ValueError, match="only applicable to DFN models, not SPMe"):
+            parse_bpx_obj(spme, v_tol=0.002)
 
     def test_temps_in_cell_error(self) -> None:
         """Test that providing initial temperature in Cell section raises an error."""
@@ -224,6 +227,7 @@ class TestParsers(unittest.TestCase):
         state = obj.pop("State")
         # v0.x used a numeric version field
         obj["Header"]["BPX"] = 0.4
+        del obj["Header"]["Macroscopic dimensionality"]
         cell = obj["Parameterisation"]["Cell"]
         ic = state["Initial conditions"]
         te = state["Thermal environment"]
@@ -231,6 +235,9 @@ class TestParsers(unittest.TestCase):
         cell["Ambient temperature [K]"] = te["Ambient temperature [K]"]
         # v0.x described thermal behaviour via a lumped thermal conductivity
         cell["Thermal conductivity [W.m-1.K-1]"] = 1.5
+        # v1.2 additions with no v0.x equivalent
+        del cell["Series resistance [Ohm]"]
+        del obj["Parameterisation"]["Electrolyte"]["Thermodynamic factor"]
         obj["Parameterisation"]["Electrolyte"]["Initial concentration [mol.m-3]"] = ic[
             "Initial electrolyte concentration [mol.m-3]"
         ]
@@ -254,6 +261,9 @@ class TestParsers(unittest.TestCase):
         assert bpx.state.thermal_environment.heat_transfer_coefficient is None
         assert bpx.state.initial_conditions.initial_hysteresis_state_positive is None
         assert bpx.state.initial_conditions.initial_hysteresis_state_negative is None
+        # v1.2 parameters are set to values that reproduce the v0.x equations
+        assert bpx.parameterisation.cell.series_resistance == 0
+        assert bpx.parameterisation.electrolyte.thermodynamic_factor == 1
 
     def test_v0_str_is_converted_with_warning(self) -> None:
         with _recorded_warnings() as records:
@@ -313,6 +323,10 @@ class TestParsers(unittest.TestCase):
         assert is_legacy_bpx(v0_obj)
         assert not is_legacy_bpx(converted)
         assert "State" in converted
+
+    def test_v0_thermal_conductivity_dropped(self) -> None:
+        # the v0.x lumped value is not carried into the v1.2 DFN thermal conductivity
+        converted = convert_v0_to_v1(self._make_v0_obj())
         assert "Thermal conductivity [W.m-1.K-1]" not in converted["Parameterisation"]["Cell"]
 
     def test_conversion_stamps_runtime_version(self) -> None:
@@ -330,6 +344,11 @@ class TestParsers(unittest.TestCase):
         with pytest.raises(ValueError, match="Header"):
             is_legacy_bpx({"Parameterisation": {}})
 
+    def test_invalid_version_field_raises(self) -> None:
+        for version in ["not a version", True, None]:
+            with self.subTest(version=version), pytest.raises(ValueError, match="Invalid BPX version field"):
+                is_legacy_bpx({"Header": {"BPX": version}})
+
     def test_legacy_example_files_are_converted(self) -> None:
         # the bundled examples are genuine v0.x files (no State block)
         examples = sorted(EXAMPLES_DIR.glob("*.json"))
@@ -339,3 +358,11 @@ class TestParsers(unittest.TestCase):
                 bpx = parse_bpx_file(path)
                 assert self._legacy_warned(records)
                 assert bpx.state is not None
+
+    def test_v0_conversion_without_electrolyte(self) -> None:
+        # SPM files have no Electrolyte section, so no thermodynamic factor is added
+        v0_obj = self._make_v0_obj()
+        del v0_obj["Parameterisation"]["Electrolyte"]
+        converted = convert_v0_to_v1(v0_obj)
+        assert "Electrolyte" not in converted["Parameterisation"]
+        assert converted["Parameterisation"]["Cell"]["Series resistance [Ohm]"] == 0
