@@ -217,6 +217,10 @@ class Electrolyte(ExtraBaseModel):
         examples=[0.259],
         description="Cation transference number",
     )
+    thermodynamic_factor: FloatFunctionTable = Field(
+        alias="Thermodynamic factor",
+        description=("Thermodynamic factor"),
+    )
     diffusivity: FloatFunctionTable = Field(
         alias="Diffusivity [m2.s-1]",
         examples=["8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"],
