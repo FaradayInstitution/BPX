@@ -175,20 +175,20 @@ class TestParsers(unittest.TestCase):
             test = copy.copy(self.base)
             parse_bpx_str(test, v_tol=0.002)
 
-    def test_thermal_conductivity_error(self) -> None:
-        """Test that providing thermal_conductivity in Cell section raises an error."""
-        test = copy.copy(self.base)
-        # Add thermal conductivity to the Cell section
-        test = test.replace(
+    def test_thermal_conductivity_dfn_only(self) -> None:
+        """Thermal conductivity is accepted in the Cell section for DFN only."""
+        test = self.base.replace(
             '"Specific heat capacity [J.K-1.kg-1]": 913,',
             '"Specific heat capacity [J.K-1.kg-1]": 913, "Thermal conductivity [W.m-1.K-1]": 2.04,',
         )
+        bpx = parse_bpx_str(test, v_tol=0.002)
+        assert bpx.parameterisation.cell.thermal_conductivity == 2.04
 
-        with pytest.raises(
-            ValueError,
-            match="The 'Thermal conductivity \\[W\\.m-1\\.K-1\\]' field is not part of the BPX schema",
-        ):
-            parse_bpx_str(test)
+        spme = json.loads(test)
+        spme["Header"]["Model"] = "SPMe"
+        del spme["Header"]["Macroscopic dimensionality"]
+        with pytest.raises(ValueError, match="only applicable to DFN models, not SPMe"):
+            parse_bpx_obj(spme, v_tol=0.002)
 
     def test_temps_in_cell_error(self) -> None:
         """Test that providing initial temperature in Cell section raises an error."""
@@ -323,6 +323,10 @@ class TestParsers(unittest.TestCase):
         assert is_legacy_bpx(v0_obj)
         assert not is_legacy_bpx(converted)
         assert "State" in converted
+
+    def test_v0_thermal_conductivity_dropped(self) -> None:
+        # the v0.x lumped value is not carried into the v1.2 DFN thermal conductivity
+        converted = convert_v0_to_v1(self._make_v0_obj())
         assert "Thermal conductivity [W.m-1.K-1]" not in converted["Parameterisation"]["Cell"]
 
     def test_conversion_stamps_runtime_version(self) -> None:

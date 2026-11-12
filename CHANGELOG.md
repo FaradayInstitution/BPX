@@ -3,6 +3,7 @@
 - Added the optional `"Macroscopic dimensionality"` field to `Header`, taking the value 1, 2 or 3, for DFN models only.
 - Added the required `"Series resistance [Ohm]"` to `Cell` (all models) and `"Thermodynamic factor"` to `Electrolyte` (SPMe and DFN).
 - `"Cation transference number"` is now a `FloatFunctionTable` of electrolyte concentration, rather than a float.
+- `"Thermal conductivity [W.m-1.K-1]"` is now an optional `Cell` parameter for DFN models, and is rejected for SPM and SPMe.
 - The legacy v0.x converter sets `"Series resistance [Ohm]"` to 0 and `"Thermodynamic factor"` to 1 (an ideal electrolyte) when they are missing, which reproduces the v0.x -> v1.1 model equations.
 
 # [v1.1.1](https://github.com/FaradayInstitution/BPX/releases/tag/v1.1.1)

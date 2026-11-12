@@ -159,26 +159,17 @@ class Cell(ExtraBaseModel):
         examples=[1000.0],
         description="Specific heat capacity (lumped)",
     )
+    thermal_conductivity: FloatInt = Field(
+        None,
+        alias="Thermal conductivity [W.m-1.K-1]",
+        examples=[2.04],
+        description="Effective thermal conductivity",
+    )
     series_resistance: FloatFunctionTable = Field(
         alias="Series resistance [Ohm]",
         examples=[0.005],
         description="Series resistance (constant or function of temperature)",
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def _validate_thermal_conductivity(cls, data: dict) -> dict:
-        """
-        Validates that thermal_conductivity is not provided in the Cell section.
-        If provided, raises an error directing users to the User-defined section.
-        """
-        if isinstance(data, dict) and "Thermal conductivity [W.m-1.K-1]" in data:
-            error_message = (
-                "The 'Thermal conductivity [W.m-1.K-1]' field is not part of the BPX schema. "
-                "Please provide this parameter in the 'User-defined' section instead."
-            )
-            raise ValueError(error_message)
-        return data
 
     @model_validator(mode="before")
     @classmethod
@@ -787,6 +778,15 @@ class BPX(ExtraBaseModel):
             data["Header"] = header
             data["Parameterisation"] = parameterisation
         return data
+
+    @model_validator(mode="after")
+    def _check_thermal_conductivity_dfn_only(self) -> BPX:
+        """Thermal conductivity is only defined for the DFN model (BPX v1.2, Table 2)."""
+        cell = self.parameterisation.cell
+        if self.header.model in ("SPM", "SPMe") and cell is not None and cell.thermal_conductivity is not None:
+            error_msg = f"'Thermal conductivity [W.m-1.K-1]' is only applicable to DFN models, not {self.header.model}."
+            raise ValueError(error_msg)
+        return self
 
     @model_validator(mode="after")
     def _check_state_against_blended_electrodes(self) -> BPX:
