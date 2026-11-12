@@ -167,6 +167,11 @@ class Cell(ExtraBaseModel):
         examples=[1000.0],
         description="Specific heat capacity (lumped)",
     )
+    series_resistance: FloatFunctionTable = Field(
+        alias="Series resistance [Ohm]",
+        examples=[1.5],
+        description="Series resistance (function of temperature)",
+    )
 
     @model_validator(mode="before")
     @classmethod
