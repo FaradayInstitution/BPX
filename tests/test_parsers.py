@@ -344,6 +344,11 @@ class TestParsers(unittest.TestCase):
         with pytest.raises(ValueError, match="Header"):
             is_legacy_bpx({"Parameterisation": {}})
 
+    def test_invalid_version_field_raises(self) -> None:
+        for version in ["not a version", True, None]:
+            with self.subTest(version=version), pytest.raises(ValueError, match="Invalid BPX version field"):
+                is_legacy_bpx({"Header": {"BPX": version}})
+
     def test_legacy_example_files_are_converted(self) -> None:
         # the bundled examples are genuine v0.x files (no State block)
         examples = sorted(EXAMPLES_DIR.glob("*.json"))
