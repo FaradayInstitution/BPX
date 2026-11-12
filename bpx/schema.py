@@ -58,6 +58,12 @@ class Header(ExtraBaseModel):
         examples=["DFN"],
         description=('Model type ("SPM", "SPMe", "DFN", "Partial")'),
     )
+    macroscopic_dimensionality: Literal[1, 2, 3] = Field(
+        None,
+        alias="Macroscopic dimensionality",
+        examples=[1],
+        description=("Macroscopic dimensionality of a DFN model (1, 2, or 3)"),
+    )
 
     @field_validator("bpx", mode="before")
     @classmethod
@@ -76,6 +82,28 @@ class Header(ExtraBaseModel):
                 stacklevel=2,
             )
         return value
+
+    @model_validator(mode="after")
+    @classmethod
+    def _validate_macroscopic_dimensionality(cls, header: dict) -> dict:
+        """
+        Validates that macroscopic_dimensionality is provided for DFN models and not provided for SPM/SPMe models.
+        """
+        model_type = header["model"]
+        macroscopic_dimensionality = header.get("macroscopic_dimensionality")
+
+        if model_type == "DFN" and macroscopic_dimensionality is None:
+            header["macroscopic_dimensionality"] = 1  # Default to 1D if not provided
+            warnings.warn(
+                "macroscopic_dimensionality is not provided for DFN model. Defaulting to 1D.",
+                UserWarning,
+                stacklevel=2,
+            )
+        elif model_type in ["SPM", "SPMe"] and macroscopic_dimensionality is not None:
+            msg = "macroscopic_dimensionality not applicable for SPM or SPMe models."
+            raise ValueError(msg)
+
+        return header
 
 
 class Cell(ExtraBaseModel):
