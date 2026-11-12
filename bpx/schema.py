@@ -212,7 +212,7 @@ class Electrolyte(ExtraBaseModel):
     Electrolyte parameters.
     """
 
-    cation_transference_number: FloatInt = Field(
+    cation_transference_number: FloatFunctionTable = Field(
         alias="Cation transference number",
         examples=[0.259],
         description="Cation transference number",
