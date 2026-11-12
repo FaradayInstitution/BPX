@@ -6,7 +6,7 @@ from .parsers import parse_bpx_file, parse_bpx_obj, parse_bpx_str
 from .schema import BPX, check_sto_limits
 from .utilities import get_electrode_concentrations, get_electrode_stoichiometries
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 __all__ = [
     "BPX",
