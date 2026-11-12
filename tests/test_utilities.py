@@ -9,7 +9,7 @@ from bpx import BPX, get_electrode_concentrations, get_electrode_stoichiometries
 adapter = TypeAdapter(BPX)
 
 
-class TestUtlilities(unittest.TestCase):
+class TestUtilities(unittest.TestCase):
     def setUp(self) -> None:
         self.base = {
             "Header": {
