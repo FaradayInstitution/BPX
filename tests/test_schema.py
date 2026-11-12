@@ -817,6 +817,28 @@ class TestSchema(unittest.TestCase):
         with pytest.raises(ValidationError, match=re.escape("must be a dict")):
             adapter.validate_python(test)
 
+    def test_dimensionality_defaults_to_1d(self) -> None:
+        test = copy.deepcopy(self.base)
+        del test["Header"]["Macroscopic dimensionality"]
+        bpx = adapter.validate_python(test)
+        assert bpx.header.macroscopic_dimensionality == 1
+
+    def test_bad_dimensionality(self) -> None:
+        test = copy.deepcopy(self.base)
+        test["Header"]["Macroscopic dimensionality"] = 4
+        with pytest.raises(ValidationError, match="Input should be 1, 2 or 3"):
+            adapter.validate_python(test)
+
+    def test_dimensionality_only_for_dfn(self) -> None:
+        cases = {"SPMe": self.base, "SPM": self.base_spm, "Partial": self.partial}
+        for model, base in cases.items():
+            with self.subTest(model=model):
+                test = copy.deepcopy(base)
+                test["Header"]["Model"] = model
+                test["Header"]["Macroscopic dimensionality"] = 1
+                with pytest.raises(ValidationError, match="Macroscopic dimensionality not applicable"):
+                    adapter.validate_python(test)
+
 
 if __name__ == "__main__":
     unittest.main()
