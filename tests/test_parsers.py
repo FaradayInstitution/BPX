@@ -227,6 +227,7 @@ class TestParsers(unittest.TestCase):
         state = obj.pop("State")
         # v0.x used a numeric version field
         obj["Header"]["BPX"] = 0.4
+        del obj["Header"]["Macroscopic dimensionality"]
         cell = obj["Parameterisation"]["Cell"]
         ic = state["Initial conditions"]
         te = state["Thermal environment"]
@@ -234,6 +235,9 @@ class TestParsers(unittest.TestCase):
         cell["Ambient temperature [K]"] = te["Ambient temperature [K]"]
         # v0.x described thermal behaviour via a lumped thermal conductivity
         cell["Thermal conductivity [W.m-1.K-1]"] = 1.5
+        # v1.2 additions with no v0.x equivalent
+        del cell["Series resistance [Ohm]"]
+        del obj["Parameterisation"]["Electrolyte"]["Thermodynamic factor"]
         obj["Parameterisation"]["Electrolyte"]["Initial concentration [mol.m-3]"] = ic[
             "Initial electrolyte concentration [mol.m-3]"
         ]
@@ -257,6 +261,9 @@ class TestParsers(unittest.TestCase):
         assert bpx.state.thermal_environment.heat_transfer_coefficient is None
         assert bpx.state.initial_conditions.initial_hysteresis_state_positive is None
         assert bpx.state.initial_conditions.initial_hysteresis_state_negative is None
+        # v1.2 parameters are set to values that reproduce the v0.x equations
+        assert bpx.parameterisation.cell.series_resistance == 0
+        assert bpx.parameterisation.electrolyte.thermodynamic_factor == 1
 
     def test_v0_str_is_converted_with_warning(self) -> None:
         with _recorded_warnings() as records:
@@ -342,3 +349,11 @@ class TestParsers(unittest.TestCase):
                 bpx = parse_bpx_file(path)
                 assert self._legacy_warned(records)
                 assert bpx.state is not None
+
+    def test_v0_conversion_without_electrolyte(self) -> None:
+        # SPM files have no Electrolyte section, so no thermodynamic factor is added
+        v0_obj = self._make_v0_obj()
+        del v0_obj["Parameterisation"]["Electrolyte"]
+        converted = convert_v0_to_v1(v0_obj)
+        assert "Electrolyte" not in converted["Parameterisation"]
+        assert converted["Parameterisation"]["Cell"]["Series resistance [Ohm]"] == 0

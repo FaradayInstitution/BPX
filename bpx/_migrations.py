@@ -42,7 +42,7 @@ def _bpx_major_version(bpx_obj: dict) -> int:
         if match is not None:
             return int(match.group(1))
     # bool is a subclass of int but is never a valid version
-    elif isinstance(version, (int, float)) and not isinstance(version, bool):
+    elif isinstance(version, (int | float)) and not isinstance(version, bool):
         return int(version)
 
     msg = f"Invalid BPX version field: {version!r}."
@@ -69,7 +69,9 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
     resolved from whichever of ambient/initial/reference temperature the file
     provides (defaulting to ``298.15`` K only if none are present); and the initial
     electrolyte concentration is carried across when present (the lumped
-    ``Thermal conductivity`` has no v1.x equivalent and is dropped). Fields that are
+    ``Thermal conductivity`` has no v1.x equivalent and is dropped). The v1.2
+    ``Series resistance [Ohm]`` and ``Thermodynamic factor`` are set to ``0`` and
+    ``1`` respectively, which reproduces the v0.x model equations. Fields that are
     optional in v1.x and have no v0.x equivalent (initial hysteresis state, heat
     transfer coefficient, and the electrolyte concentration for SPM files with no
     ``Electrolyte`` section) are omitted rather than synthesised, leaving simulators
@@ -94,6 +96,13 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
 
     # Drop the deprecated lumped thermal conductivity (no v1.x equivalent).
     cell.pop("Thermal conductivity [W.m-1.K-1]", None)
+
+    # v1.2 added a series resistance (eq. 39) and an electrolyte thermodynamic
+    # factor (eq. 15), both required. v0.x equations omit both terms, which is
+    # equivalent to Rs = 0 and an ideal electrolyte (f_gamma = 1).
+    cell.setdefault("Series resistance [Ohm]", 0)
+    if "Electrolyte" in parameterisation:
+        electrolyte.setdefault("Thermodynamic factor", 1)
 
     initial_conditions: dict = {
         "Initial state-of-charge": 1,
@@ -127,7 +136,7 @@ def convert_v0_to_v1(bpx_obj: dict) -> dict:
     # Stamp the header with the current runtime version so the converted object
     # reports the schema it now conforms to (deferred import avoids a cycle with
     # bpx/__init__.py, which imports this module).
-    from . import __version__  # noqa: PLC0415
+    from . import __version__
 
     params.setdefault("Header", {})["BPX"] = __version__
 
