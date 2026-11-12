@@ -11,15 +11,15 @@ my_params = bpx.parse_bpx_file(filename)
 ```
 `my_params` will now be of type `BPX`, which acts like a python dataclass with the same attributes as the BPX format. To obatin example files, see the [A:E BPX Parameterisation repository](https://github.com/About-Energy-OpenSource/About-Energy-BPX-Parameterisation/) or [BPX example repository](https://github.com/pybamm-team/bpx-example).
 
-Attributes of the class can be printed out using the standard Python dot notation, for example, you can print out the initial temperature of the cell using
+Attributes of the class can be printed out using the standard Python dot notation, for example, you can print out the reference temperature of the cell using
 ```python
-print('Initial temperature of cell:', my_params.parameterisation.cell.initial_temperature)
+print('Reference temperature of cell:', my_params.parameterisation.cell.reference_temperature)
 ```
 
 Alternatively, you can export the `BPX` object as a dictionary and use the string names (aliases) of the parameters from the standard
 ```python
 my_params_dict = my_params.model_dump(by_alias=True)
-print('Initial temperature of cell:', my_params_dict["Parameterisation"]["Cell"]["Initial temperature [K]"])
+print('Reference temperature of cell:', my_params_dict["Parameterisation"]["Cell"]["Reference temperature [K]"])
 ```
 
 The entire BPX object can be pretty printed using the `devtools` package 
