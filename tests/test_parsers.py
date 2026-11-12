@@ -39,9 +39,10 @@ class TestParsers(unittest.TestCase):
         base = """
             {
                 "Header": {
-                        "BPX": "1.0.0",
+                        "BPX": "1.2.0",
                         "Title": "Parameterisation example of an NMC111|graphite 12.5 Ah pouch cell",
-                        "Model": "DFN"
+                        "Model": "DFN",
+                        "Macroscopic dimensionality": 1
                 },
                 "Parameterisation": {
                         "Cell": {
@@ -54,7 +55,8 @@ class TestParsers(unittest.TestCase):
                             "Electrode area [m2]": 0.016808,
                             "Number of electrode pairs connected in parallel to make a cell": 34,
                             "External surface area [m2]": 0.0379,
-                            "Volume [m3]": 0.000128
+                            "Volume [m3]": 0.000128,
+                            "Series resistance [Ohm]": 1.5
                         },
                         "Electrolyte": {
                             "Cation transference number": 0.2594,
@@ -62,7 +64,8 @@ class TestParsers(unittest.TestCase):
                                 "0.1297 * (x / 1000) ** 3 - 2.51 * (x / 1000) ** 1.5 + 3.329 * (x / 1000)",
                             "Diffusivity [m2.s-1]": "8.794e-11 * (x / 1000) ** 2 - 3.972e-10 * (x / 1000) + 4.862e-10",
                             "Conductivity activation energy [J.mol-1]": 17100,
-                            "Diffusivity activation energy [J.mol-1]": 17100
+                            "Diffusivity activation energy [J.mol-1]": 17100,
+                            "Thermodynamic factor": 1.0
                         },
                         "Negative electrode": {
                             "Particle radius [m]": 4.12e-06,

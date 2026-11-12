@@ -16,8 +16,9 @@ class TestSchema(unittest.TestCase):
     def setUp(self) -> None:
         self.base: dict[str, Any] = {
             "Header": {
-                "BPX": "1.0.0",
+                "BPX": "1.2.0",
                 "Model": "DFN",
+                "Macroscopic dimensionality": 1,
             },
             "Parameterisation": {
                 "Cell": {
@@ -29,11 +30,13 @@ class TestSchema(unittest.TestCase):
                     "Nominal cell capacity [A.h]": 5.0,
                     "Lower voltage cut-off [V]": 2.0,
                     "Upper voltage cut-off [V]": 4.0,
+                    "Series resistance [Ohm]": 1.5,
                 },
                 "Electrolyte": {
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
                     "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
+                    "Thermodynamic factor": 1.0,
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -104,7 +107,7 @@ class TestSchema(unittest.TestCase):
         # SPM parameter set
         self.base_spm = {
             "Header": {
-                "BPX": "1.0.0",
+                "BPX": "1.2.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -117,6 +120,7 @@ class TestSchema(unittest.TestCase):
                     "Nominal cell capacity [A.h]": 5,
                     "Lower voltage cut-off [V]": 2,
                     "Upper voltage cut-off [V]": 4,
+                    "Series resistance [Ohm]": 1.5,
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -176,7 +180,7 @@ class TestSchema(unittest.TestCase):
         # Non-blended electrodes
         self.base_non_blended = {
             "Header": {
-                "BPX": "1.0.0",
+                "BPX": "1.2.0",
                 "Model": "SPM",
             },
             "Parameterisation": {
@@ -189,6 +193,7 @@ class TestSchema(unittest.TestCase):
                     "Nominal cell capacity [A.h]": 5.0,
                     "Lower voltage cut-off [V]": 2.0,
                     "Upper voltage cut-off [V]": 4.0,
+                    "Series resistance [Ohm]": 1.5,
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
@@ -242,7 +247,7 @@ class TestSchema(unittest.TestCase):
         # partial DFN model
         self.partial: dict[str, Any] = {
             "Header": {
-                "BPX": "1.0.0",
+                "BPX": "1.2.0",
                 "Model": "Partial",
             },
             "Parameterisation": {
@@ -303,6 +308,7 @@ class TestSchema(unittest.TestCase):
     def test_simple_spme(self) -> None:
         test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "SPMe"
+        del test["Header"]["Macroscopic dimensionality"]
         adapter.validate_python(test)
 
     def test_simple_spm(self) -> None:
@@ -336,6 +342,7 @@ class TestSchema(unittest.TestCase):
     def test_bad_spm(self) -> None:
         test = copy.deepcopy(self.base)
         test["Header"]["Model"] = "SPM"
+        del test["Header"]["Macroscopic dimensionality"]
         with pytest.raises(ValueError, match="Valid parameter set does not correspond with"):
             adapter.validate_python(test)
 

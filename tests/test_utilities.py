@@ -13,8 +13,9 @@ class TestUtlilities(unittest.TestCase):
     def setUp(self) -> None:
         self.base = {
             "Header": {
-                "BPX": "1.0.0",
+                "BPX": "1.2.0",
                 "Model": "DFN",
+                "Macroscopic dimensionality": 1,
             },
             "Parameterisation": {
                 "Cell": {
@@ -26,11 +27,13 @@ class TestUtlilities(unittest.TestCase):
                     "Nominal cell capacity [A.h]": 5.0,
                     "Lower voltage cut-off [V]": 2.0,
                     "Upper voltage cut-off [V]": 4.0,
+                    "Series resistance [Ohm]": 1.5,
                 },
                 "Electrolyte": {
                     "Cation transference number": 0.259,
                     "Conductivity [S.m-1]": 1.0,
                     "Diffusivity [m2.s-1]": ("8.794e-7 * x * x - 3.972e-6 * x + 4.862e-6"),
+                    "Thermodynamic factor": 1.0,
                 },
                 "Negative electrode": {
                     "Particle radius [m]": 5.86e-6,
