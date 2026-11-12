@@ -84,26 +84,18 @@ class Header(ExtraBaseModel):
         return value
 
     @model_validator(mode="after")
-    @classmethod
-    def _validate_macroscopic_dimensionality(cls, header: dict) -> dict:
+    def _validate_macroscopic_dimensionality(self) -> Header:
         """
         Validates that macroscopic_dimensionality is provided for DFN models and not provided for SPM/SPMe models.
         """
-        model_type = header["model"]
-        macroscopic_dimensionality = header.get("macroscopic_dimensionality")
 
-        if model_type == "DFN" and macroscopic_dimensionality is None:
-            header["macroscopic_dimensionality"] = 1  # Default to 1D if not provided
-            warnings.warn(
-                "macroscopic_dimensionality is not provided for DFN model. Defaulting to 1D.",
-                UserWarning,
-                stacklevel=2,
-            )
-        elif model_type in ["SPM", "SPMe"] and macroscopic_dimensionality is not None:
-            msg = "macroscopic_dimensionality not applicable for SPM or SPMe models."
+        if self.model == "DFN" and self.macroscopic_dimensionality is None:
+            self.macroscopic_dimensionality = 1  # Default to 1D if not provided
+        elif self.model != "DFN" and self.macroscopic_dimensionality is not None:
+            msg = "Macroscopic dimensionality not applicable to SPM, SPMe or Partial models."
             raise ValueError(msg)
 
-        return header
+        return self
 
 
 class Cell(ExtraBaseModel):
